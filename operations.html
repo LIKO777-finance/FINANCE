@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinFlow - Операции</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#4f46e5',
+                        'brand-light': '#e0e7ff',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.2s ease-out; }
+        
+        /* Стили для скроллбара */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+        
+        .chart-donut {
+            background: conic-gradient( #10b981 0% 60%, #e5e7eb 60% 100% );
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <div class="p-6 flex items-center space-x-2">
+                <div class="w-8 h-8 bg-brand rounded-lg flex items-center justify-center">
+                    <div class="w-4 h-4 bg-white rounded-sm transform rotate-45"></div>
+                </div>
+                <span class="text-xl font-bold text-gray-900">FinFlow</span>
+            </div>
+            <nav class="mt-4 px-4 space-y-1">
+                <a href="index.html" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="ph ph-wallet text-xl"></i>
+                    <span>Счета</span>
+                </a>
+                <a href="operations.html" class="flex items-center space-x-3 w-full px-4 py-3 bg-brand-light text-brand rounded-xl font-medium transition">
+                    <i class="ph ph-list-dashes text-xl"></i>
+                    <span>Операции</span>
+                </a>
+            </nav>
+        </div>
+        <div class="p-4 border-t border-gray-200 m-4 flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-xl transition">
+            <img src="https://ui-avatars.com/api/?name=Андрей+Иванов&background=random" alt="Avatar" class="w-10 h-10 rounded-full" />
+            <div class="flex-1">
+                <p class="text-sm font-semibold text-gray-900">Андрей Иванов</p>
+                <p class="text-xs text-gray-500">Профиль</p>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto flex flex-col">
+        <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Операции</h1>
+                <p class="text-sm text-gray-500 mt-1">Все ваши финансовые операции в одном месте</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="flex items-center space-x-2 border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition text-gray-700">
+                    <i class="ph ph-download-simple"></i>
+                    <span class="hidden sm:inline">Экспорт</span>
+                </button>
+                <button onclick="openTransactionModal()" class="flex items-center space-x-2 bg-brand text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition">
+                    <i class="ph ph-plus"></i>
+                    <span class="hidden sm:inline">Новая операция</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="p-8 flex-1 flex flex-col xl:flex-row gap-8">
+            
+            <div class="flex-1 min-w-0">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <img src="https://flagcdn.com/w20/by.png" class="w-5 h-5 rounded-full object-cover">
+                            <span class="text-sm font-medium text-gray-600">BYN (Белорусский рубль)</span>
+                        </div>
+                        <div class="text-xl font-bold text-emerald-500 mb-1" id="stat-inc-byn">+0 Br</div>
+                        <div class="text-xs text-gray-400">за этот месяц</div>
+                        <i class="ph ph-trend-up absolute right-4 bottom-4 text-4xl text-emerald-50 opacity-50"></i>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+                        <div class="flex items-center space-x-2 mb-2">
+                            <img src="https://flagcdn.com/w20/ru.png" class="w-5 h-5 rounded-full object-cover">
+                            <span class="text-sm font-medium text-gray-600">RUB (Российский рубль)</span>
+                        </div>
+                        <div class="text-xl font-bold text-blue-500 mb-1" id="stat-inc-rub">+0 ₽</div>
+                        <div class="text-xs text-gray-400">за этот месяц</div>
+                        <i class="ph ph-trend-up absolute right-4 bottom-4 text-4xl text-blue-50 opacity-50"></i>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+                        <div class="text-sm font-medium text-gray-600 mb-2">Все счета</div>
+                        <div class="text-xl font-bold text-gray-900 mb-1" id="stat-accounts-count">0</div>
+                        <div class="text-xs text-gray-400">активных счетов</div>
+                        <i class="ph ph-cards absolute right-4 bottom-4 text-4xl text-purple-50 opacity-50"></i>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+                        <div class="text-sm font-medium text-gray-600 mb-2">Всего расходов</div>
+                        <div class="text-xl font-bold text-red-500 mb-1" id="stat-exp-total">-0</div>
+                        <div class="text-xs text-gray-400">за этот месяц</div>
+                        <i class="ph ph-trend-down absolute right-4 bottom-4 text-4xl text-red-50 opacity-50"></i>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <div class="flex space-x-6 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0" id="tabs-container">
+                        <button onclick="setTab('Все')" class="tab-btn font-medium text-brand border-b-2 border-brand pb-2" data-tab="Все">Все операции</button>
+                        <button onclick="setTab('Доход')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-2" data-tab="Доход">Доходы</button>
+                        <button onclick="setTab('Расход')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-2" data-tab="Расход">Расходы</button>
+                        <button onclick="setTab('Перевод')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-2" data-tab="Перевод">Переводы</button>
+                    </div>
+                    <div class="flex items-center space-x-3 w-full sm:w-auto">
+                        <div class="relative w-full sm:w-64">
+                            <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="search-input" onkeyup="renderTransactions()" placeholder="Поиск по операциям..." class="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand transition">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="transactions-container" class="space-y-6 pb-10">
+                    <div class="text-center py-10 text-gray-400">Загрузка данных...</div>
+                </div>
+
+            </div>
+
+            <aside class="w-full xl:w-80 shrink-0 space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-gray-900">Сводка за месяц</h3>
+                        <span class="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-lg">Текущий</span>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">Доходы</p>
+                                <p class="font-semibold text-emerald-600 text-sm" id="sidebar-inc-byn">0 Br</p>
+                                <p class="font-semibold text-emerald-600 text-sm" id="sidebar-inc-rub">0 ₽</p>
+                            </div>
+                            <div class="w-12 h-12 chart-donut relative" style="background: conic-gradient(#10b981 0% 100%);">
+                                <div class="absolute inset-1.5 bg-white rounded-full"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-gray-100"></div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">Расходы</p>
+                                <p class="font-semibold text-red-500 text-sm" id="sidebar-exp-byn">0 Br</p>
+                                <p class="font-semibold text-red-500 text-sm" id="sidebar-exp-rub">0 ₽</p>
+                            </div>
+                            <div class="w-12 h-12 chart-donut relative" style="background: conic-gradient(#ef4444 0% 100%);">
+                                <div class="absolute inset-1.5 bg-white rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-brand-light p-6 rounded-2xl border border-indigo-100 relative overflow-hidden">
+                    <h3 class="font-bold text-brand mb-2 relative z-10">Аналитика активна</h3>
+                    <p class="text-sm text-indigo-800 relative z-10">Добавляйте операции регулярно, чтобы графики отображали точную картину ваших финансов.</p>
+                    <i class="ph ph-chart-pie-slice absolute -right-4 -bottom-4 text-6xl text-brand opacity-10"></i>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <div id="transaction-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform" id="transaction-modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Новая операция</h3>
+                <button onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-700 transition">
+                    <i class="ph ph-x text-2xl"></i>
+                </button>
+            </div>
+            
+            <div class="flex bg-gray-100 p-1 rounded-xl mb-6">
+                <button type="button" onclick="setOpType('Расход')" id="btn-type-expense" class="flex-1 py-1.5 text-sm font-medium rounded-lg bg-white shadow-sm text-gray-900 transition">Расход</button>
+                <button type="button" onclick="setOpType('Доход')" id="btn-type-income" class="flex-1 py-1.5 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-900 transition">Доход</button>
+                <button type="button" onclick="setOpType('Перевод')" id="btn-type-transfer" class="flex-1 py-1.5 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-900 transition">Перевод</button>
+            </div>
+
+            <form onsubmit="submitTransaction(event)" class="space-y-4">
+                <input type="hidden" id="op-type" value="Расход">
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Сумма</label>
+                    <div class="relative">
+                        <input type="number" id="op-amount" required placeholder="0.00" step="0.01" class="w-full px-4 py-3 text-lg font-semibold border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition">
+                    </div>
+                </div>
+
+                <div id="field-account-from">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" id="label-acc-from">Со счета списания</label>
+                    <select id="op-account-id" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
+                </div>
+
+                <div id="field-account-to" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">На счет зачисления</label>
+                    <select id="op-to-account-id" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4" id="field-category-date">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
+                        <select id="op-category" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                            <option value="Продукты">🛒 Продукты</option>
+                            <option value="Кафе и рестораны">☕ Кафе</option>
+                            <option value="Транспорт">🚗 Транспорт</option>
+                            <option value="Зарплата">💰 Зарплата</option>
+                            <option value="Перевод">🔄 Перевод</option>
+                            <option value="Разное">📦 Разное</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Дата</label>
+                        <input type="date" id="op-date" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                    </div>
+                </div>
+
+                <div id="field-description">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Описание / Название (необязательно)</label>
+                    <input type="text" id="op-description" placeholder="Например: Пятёрочка" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition">
+                </div>
+                
+                <button type="submit" class="w-full bg-brand text-white font-medium py-3 rounded-xl hover:bg-indigo-700 transition mt-6 shadow-md" id="submit-btn">
+                    Добавить операцию
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Твои доступы к Supabase (оставлены твои ключи)
+        const supabaseUrl = 'https://ujjuoyfykkmgcaeujami.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqanVveWZ5a2ttZ2NhZXVqYW1pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3Nzg1MDYsImV4cCI6MjA5ODM1NDUwNn0.Rf9cDJQrsr8mTfaNBgpUabwU3oq81Wcvr8xcyYIoKFg';
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let accountsData = [];
+        let transactionsData = [];
+        let currentTab = 'Все';
+
+        // Устанавливаем сегодняшнюю дату по умолчанию
+        document.getElementById('op-date').valueAsDate = new Date();
+
+        const formatMoney = (amount, currency = '₽') => {
+            return Number(amount).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ' + currency;
+        };
+
+        // Инициализация загрузки данных
+        async function initData() {
+            try {
+                // 1. Грузим счета
+                const { data: accs, error: accErr } = await supabaseClient.from('accounts').select('*');
+                if (accErr) throw accErr;
+                accountsData = accs || [];
+                
+                // Обновляем счетчик счетов
+                document.getElementById('stat-accounts-count').innerText = accountsData.length;
+
+                // 2. Грузим транзакции
+                const { data: trans, error: transErr } = await supabaseClient.from('transactions').select('*').order('created_at', { ascending: false });
+                if (transErr) throw transErr;
+                transactionsData = trans || [];
+
+                renderTransactions();
+                calculateStats();
+            } catch (error) {
+                console.error("Ошибка загрузки:", error);
+                document.getElementById('transactions-container').innerHTML = `
+                    <div class="p-8 text-center text-red-500 bg-white rounded-2xl border border-red-100">
+                        Ошибка загрузки. Проверьте консоль или убедитесь, что создали таблицу transactions.
+                    </div>`;
+            }
+        }
+
+        /* --- ЛОГИКА ОТОБРАЖЕНИЯ ОПЕРАЦИЙ --- */
+        function setTab(tabName) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.dataset.tab === tabName) {
+                    btn.className = 'tab-btn font-medium text-brand border-b-2 border-brand pb-2 transition';
+                } else {
+                    btn.className = 'tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-2';
+                }
+            });
+            renderTransactions();
+        }
+
+        // Вспомогательная функция для иконок и цветов категорий
+        function getCategoryStyle(category, type) {
+            if (type === 'Перевод') return { icon: 'ph-arrows-left-right', color: 'bg-purple-100 text-purple-600', badge: 'bg-purple-50 text-purple-600' };
+            
+            const styles = {
+                'Продукты': { icon: 'ph-shopping-cart', color: 'bg-orange-100 text-orange-600', badge: 'bg-orange-50 text-orange-600' },
+                'Кафе и рестораны': { icon: 'ph-coffee', color: 'bg-yellow-100 text-yellow-600', badge: 'bg-yellow-50 text-yellow-600' },
+                'Транспорт': { icon: 'ph-car', color: 'bg-blue-100 text-blue-600', badge: 'bg-blue-50 text-blue-600' },
+                'Зарплата': { icon: 'ph-money', color: 'bg-emerald-100 text-emerald-600', badge: 'bg-emerald-50 text-emerald-600' },
+            };
+            return styles[category] || { icon: 'ph-receipt', color: 'bg-gray-100 text-gray-600', badge: 'bg-gray-100 text-gray-600' };
+        }
+
+        function renderTransactions() {
+            const container = document.getElementById('transactions-container');
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            container.innerHTML = '';
+
+            // Фильтрация
+            let filtered = transactionsData.filter(t => {
+                const matchTab = currentTab === 'Все' || t.type === currentTab;
+                const matchSearch = (t.description || '').toLowerCase().includes(searchQuery) || 
+                                    (t.category || '').toLowerCase().includes(searchQuery);
+                return matchTab && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-400 bg-white rounded-2xl border border-gray-200 border-dashed">Операций пока нет.</div>`;
+                return;
+            }
+
+            // Группировка по датам
+            const grouped = {};
+            filtered.forEach(t => {
+                const dateObj = new Date(t.created_at);
+                const today = new Date();
+                const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+                
+                let dateStr = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+                if (dateObj.toDateString() === today.toDateString()) dateStr = 'Сегодня, ' + dateStr;
+                else if (dateObj.toDateString() === yesterday.toDateString()) dateStr = 'Вчера, ' + dateStr;
+
+                if (!grouped[dateStr]) grouped[dateStr] = [];
+                grouped[dateStr].push(t);
+            });
+
+            let html = '';
+            for (const [date, transList] of Object.entries(grouped)) {
+                html += `
+                <div class="mb-6">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">${date}</h3>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100">
+                        ${transList.map(t => {
+                            const time = new Date(t.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                            const style = getCategoryStyle(t.category, t.type);
+                            const acc = accountsData.find(a => a.id === t.account_id);
+                            const accName = acc ? acc.name : 'Удаленный счет';
+                            
+                            let amountHtml = '';
+                            let titleHtml = t.description || t.category;
+
+                            if (t.type === 'Доход') {
+                                amountHtml = `<span class="font-semibold text-emerald-500 whitespace-nowrap">+${formatMoney(t.amount, t.currency)}</span>`;
+                            } else if (t.type === 'Расход') {
+                                amountHtml = `<span class="font-semibold text-gray-900 whitespace-nowrap">-${formatMoney(t.amount, t.currency)}</span>`;
+                            } else if (t.type === 'Перевод') {
+                                const toAcc = accountsData.find(a => a.id === t.to_account_id);
+                                const toName = toAcc ? toAcc.name : '?';
+                                titleHtml = `Перевод средств`;
+                                amountHtml = `<span class="font-semibold text-gray-900 whitespace-nowrap">-${formatMoney(t.amount, t.currency)}</span>`;
+                                // Доп строка для перевода
+                                accNameHtml = `<span class="text-xs text-gray-500">${accName} → ${toName}</span>`;
+                            }
+
+                            return `
+                            <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition group">
+                                <div class="flex items-center space-x-4 min-w-0">
+                                    <div class="text-xs text-gray-400 w-10 shrink-0 text-center">${time}</div>
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${style.color}">
+                                        <i class="ph ${style.icon} text-lg"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="font-semibold text-gray-900 truncate text-sm sm:text-base">${titleHtml}</p>
+                                        ${t.type === 'Перевод' 
+                                            ? `<p class="text-xs text-gray-500 truncate">${accName} &rarr; ${accountsData.find(a => a.id === t.to_account_id)?.name}</p>`
+                                            : `<p class="text-xs text-gray-500 truncate">${accName}</p>`
+                                        }
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-4 shrink-0 pl-4">
+                                    <span class="hidden sm:inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${style.badge}">${t.category}</span>
+                                    <div class="text-right">${amountHtml}</div>
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function calculateStats() {
+            let incByn = 0, incRub = 0, expByn = 0, expRub = 0;
+            const currentMonth = new Date().getMonth();
+
+            transactionsData.forEach(t => {
+                const d = new Date(t.created_at);
+                if (d.getMonth() === currentMonth) {
+                    if (t.type === 'Доход') {
+                        if (t.currency === 'Br') incByn += Number(t.amount);
+                        if (t.currency === '₽') incRub += Number(t.amount);
+                    } else if (t.type === 'Расход') {
+                        if (t.currency === 'Br') expByn += Number(t.amount);
+                        if (t.currency === '₽') expRub += Number(t.amount);
+                    }
+                }
+            });
+
+            document.getElementById('stat-inc-byn').innerText = `+${formatMoney(incByn, 'Br')}`;
+            document.getElementById('stat-inc-rub').innerText = `+${formatMoney(incRub, '₽')}`;
+            
+            // Суммируем расходы грубо для карточки (приводим к рублям условно для красоты, либо выводим две валюты)
+            // Здесь просто покажем траты в основной валюте (например ₽)
+            document.getElementById('stat-exp-total').innerText = `-${formatMoney(expRub, '₽')}`;
+
+            // Боковая панель
+            document.getElementById('sidebar-inc-byn').innerText = formatMoney(incByn, 'Br');
+            document.getElementById('sidebar-inc-rub').innerText = formatMoney(incRub, '₽');
+            document.getElementById('sidebar-exp-byn').innerText = formatMoney(expByn, 'Br');
+            document.getElementById('sidebar-exp-rub').innerText = formatMoney(expRub, '₽');
+        }
+
+
+        /* --- ЛОГИКА ДОБАВЛЕНИЯ ОПЕРАЦИЙ --- */
+        const modal = document.getElementById('transaction-modal');
+        const modalContent = document.getElementById('transaction-modal-content');
+
+        function openTransactionModal() {
+            if (accountsData.length === 0) { alert("Сначала создайте хотя бы один счет в разделе 'Счета'."); return; }
+            
+            let optionsHtml = '';
+            accountsData.forEach(acc => {
+                optionsHtml += `<option value="${acc.id}">${acc.name} (${formatMoney(acc.balance, acc.currency)})</option>`;
+            });
+            document.getElementById('op-account-id').innerHTML = optionsHtml;
+            document.getElementById('op-to-account-id').innerHTML = optionsHtml;
+
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            setTimeout(() => { modalContent.classList.remove('scale-95'); modalContent.classList.add('scale-100'); }, 10);
+        }
+
+        function closeTransactionModal() {
+            modalContent.classList.remove('scale-100'); modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden'); modal.classList.remove('flex');
+                document.getElementById('op-amount').value = '';
+                document.getElementById('op-description').value = '';
+            }, 150);
+        }
+
+        function setOpType(type) {
+            document.getElementById('op-type').value = type;
+            const btns = ['expense', 'income', 'transfer'];
+            btns.forEach(b => {
+                const el = document.getElementById(`btn-type-${b}`);
+                el.className = 'flex-1 py-1.5 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-900 transition';
+            });
+            
+            const activeBtn = type === 'Расход' ? 'expense' : (type === 'Доход' ? 'income' : 'transfer');
+            document.getElementById(`btn-type-${activeBtn}`).className = 'flex-1 py-1.5 text-sm font-medium rounded-lg bg-white shadow-sm text-gray-900 transition';
+
+            // Настройка полей формы в зависимости от типа
+            if (type === 'Перевод') {
+                document.getElementById('field-account-to').classList.remove('hidden');
+                document.getElementById('field-category-date').classList.add('hidden');
+                document.getElementById('field-description').classList.add('hidden');
+                document.getElementById('label-acc-from').innerText = 'Со счета списания';
+                document.getElementById('op-account-id').required = true;
+                document.getElementById('op-to-account-id').required = true;
+            } else {
+                document.getElementById('field-account-to').classList.add('hidden');
+                document.getElementById('field-category-date').classList.remove('hidden');
+                document.getElementById('field-description').classList.remove('hidden');
+                document.getElementById('label-acc-from').innerText = type === 'Доход' ? 'На какой счет зачислить' : 'С какого счета списать';
+                document.getElementById('op-to-account-id').required = false;
+            }
+        }
+
+        async function submitTransaction(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn'); 
+            btn.innerText = 'Сохранение...'; btn.disabled = true;
+
+            const type = document.getElementById('op-type').value;
+            const amount = parseFloat(document.getElementById('op-amount').value) || 0;
+            const accountId = document.getElementById('op-account-id').value;
+            const dateInput = document.getElementById('op-date').value;
+            
+            // Собираем данные операции
+            const dateObj = new Date(dateInput);
+            dateObj.setHours(new Date().getHours()); // Сохраняем примерное время
+            const createdAt = dateObj.toISOString();
+
+            const account = accountsData.find(a => a.id === accountId);
+            if (!account || amount <= 0) {
+                alert('Проверьте сумму и выбранный счет.');
+                btn.innerText = 'Добавить операцию'; btn.disabled = false;
+                return;
+            }
+
+            try {
+                if (type === 'Расход' || type === 'Доход') {
+                    const category = document.getElementById('op-category').value;
+                    const description = document.getElementById('op-description').value;
+
+                    // 1. Запись в историю
+                    const { error: txErr } = await supabaseClient.from('transactions').insert([{
+                        type: type, amount: amount, currency: account.currency,
+                        category: category, description: description, account_id: accountId,
+                        created_at: createdAt
+                    }]);
+                    if (txErr) throw txErr;
+
+                    // 2. Обновление баланса счета
+                    const newBalance = type === 'Доход' ? Number(account.balance) + amount : Number(account.balance) - amount;
+                    const { error: accErr } = await supabaseClient.from('accounts').update({ balance: newBalance }).eq('id', accountId);
+                    if (accErr) throw accErr;
+
+                } else if (type === 'Перевод') {
+                    const toAccountId = document.getElementById('op-to-account-id').value;
+                    if (accountId === toAccountId) throw new Error('Нельзя перевести на тот же самый счет!');
+                    
+                    const toAccount = accountsData.find(a => a.id === toAccountId);
+                    if(account.currency !== toAccount.currency) {
+                        alert("Перевод между разными валютами пока лучше делать через страницу Счета (там есть поддержка курса).");
+                        btn.innerText = 'Добавить операцию'; btn.disabled = false; return;
+                    }
+
+                    // Запись в историю переводов
+                    const { error: txErr } = await supabaseClient.from('transactions').insert([{
+                        type: 'Перевод', amount: amount, currency: account.currency,
+                        category: 'Перевод', description: 'Перевод между счетами',
+                        account_id: accountId, to_account_id: toAccountId,
+                        created_at: createdAt
+                    }]);
+                    if (txErr) throw txErr;
+
+                    // Списание и зачисление
+                    await supabaseClient.from('accounts').update({ balance: Number(account.balance) - amount }).eq('id', accountId);
+                    await supabaseClient.from('accounts').update({ balance: Number(toAccount.balance) + amount }).eq('id', toAccountId);
+                }
+
+                closeTransactionModal();
+                initData(); // Перезагружаем интерфейс
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+            } finally {
+                btn.innerText = 'Добавить операцию'; btn.disabled = false;
+            }
+        }
+
+        // Запуск
+        initData();
+    </script>
+</body>
+</html>
