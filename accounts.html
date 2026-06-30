@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinFlow - Счета</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#4f46e5', // indigo-600
+                        'brand-light': '#e0e7ff', // indigo-100
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Стили для круговой диаграммы */
+        .chart-pie {
+            background: conic-gradient(
+                #10b981 0% 55%, 
+                #3b82f6 55% 94%, 
+                #ef4444 94% 100%
+            );
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between">
+        <div>
+            <div class="p-6 flex items-center space-x-2">
+                <div class="w-8 h-8 bg-brand rounded-lg flex items-center justify-center">
+                    <div class="w-4 h-4 bg-white rounded-sm transform rotate-45"></div>
+                </div>
+                <span class="text-xl font-bold text-gray-900">FinFlow</span>
+            </div>
+            
+            <nav class="mt-4 px-4">
+                <button class="flex items-center space-x-3 w-full px-4 py-3 bg-brand-light text-brand rounded-xl font-medium">
+                    <i class="ph ph-wallet text-xl"></i>
+                    <span>Счета</span>
+                </button>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-gray-200 m-4 flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-xl transition">
+            <img src="https://ui-avatars.com/api/?name=Андрей+Иванов&background=random" alt="Avatar" class="w-10 h-10 rounded-full" />
+            <div class="flex-1">
+                <p class="text-sm font-semibold text-gray-900">Андрей Иванов</p>
+                <p class="text-xs text-gray-500">Профиль</p>
+            </div>
+            <i class="ph ph-caret-down text-gray-400"></i>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto">
+        <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Счета</h1>
+                <p class="text-sm text-gray-500 mt-1">Все ваши счета и карты в одном месте</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="addAccount()" class="flex items-center space-x-2 bg-brand text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition">
+                    <i class="ph ph-plus"></i>
+                    <span>Добавить счёт</span>
+                </button>
+                <button class="flex items-center space-x-2 border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition">
+                    <i class="ph ph-arrows-left-right"></i>
+                    <span>Перевод между счетами</span>
+                </button>
+                <div class="flex space-x-4 text-gray-400 pl-4 border-l border-gray-200 text-xl">
+                    <i class="ph ph-magnifying-glass cursor-pointer hover:text-gray-600"></i>
+                    <div class="relative cursor-pointer hover:text-gray-600">
+                        <i class="ph ph-bell"></i>
+                        <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="p-8">
+            <div class="grid grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-sm text-gray-500 mb-2">Всего на счетах</p>
+                    <h2 class="text-2xl font-bold" id="total-balance">0 ₽</h2>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-sm text-gray-500 mb-2">Текущие счета</p>
+                    <h2 class="text-2xl font-bold" id="current-balance">0 ₽</h2>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-sm text-gray-500 mb-2">Накопительные счета</p>
+                    <h2 class="text-2xl font-bold" id="savings-balance">0 ₽</h2>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-sm text-gray-500 mb-2">Кредитные счета</p>
+                    <h2 class="text-2xl font-bold text-gray-900" id="credit-balance">0 ₽</h2>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex space-x-6 border-b border-gray-200 w-full" id="tabs-container">
+                    <button onclick="setTab('Все счета')" class="tab-btn pb-3 font-medium text-brand border-b-2 border-brand" data-tab="Все счета">Все счета</button>
+                    <button onclick="setTab('Текущие')" class="tab-btn pb-3 font-medium text-gray-500 hover:text-gray-800" data-tab="Текущие">Текущие</button>
+                    <button onclick="setTab('Накопительные')" class="tab-btn pb-3 font-medium text-gray-500 hover:text-gray-800" data-tab="Накопительные">Накопительные</button>
+                    <button onclick="setTab('Кредитные')" class="tab-btn pb-3 font-medium text-gray-500 hover:text-gray-800" data-tab="Кредитные">Кредитные</button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div id="accounts-list" class="divide-y divide-gray-100">
+                    <div class="p-8 text-center text-gray-500">Загрузка данных...</div>
+                </div>
+                
+                <div class="p-4 bg-gray-50 text-center border-t border-gray-100">
+                    <button onclick="addAccount()" class="text-brand font-medium hover:text-indigo-800 flex items-center justify-center space-x-2 w-full transition">
+                        <i class="ph ph-plus"></i>
+                        <span>Добавить счёт или карту</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <aside class="w-80 bg-white border-l border-gray-200 overflow-y-auto p-6 hidden lg:block">
+        
+        <div class="mb-8">
+            <h3 class="font-semibold text-gray-900 mb-4">Распределение средств</h3>
+            <div class="flex items-center space-x-6">
+                <div class="w-24 h-24 rounded-full chart-pie relative">
+                    <div class="absolute inset-2 bg-white rounded-full"></div> </div>
+                <div class="space-y-3 text-sm flex-1">
+                    <div class="flex justify-between items-center">
+                        <span class="flex items-center text-gray-600"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>Текущие</span>
+                        <span class="font-medium text-gray-900">55%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="flex items-center text-gray-600"><span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>Копилки</span>
+                        <span class="font-medium text-gray-900">39%</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="flex items-center text-gray-600"><span class="w-2 h-2 rounded-full bg-red-500 mr-2"></span>Кредит</span>
+                        <span class="font-medium text-gray-900">6%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold text-gray-900">Последние операции</h3>
+                <button class="text-sm text-brand hover:underline">Смотреть все</button>
+            </div>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl">
+                            <i class="ph ph-arrows-left-right"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Перевод на карту</p>
+                            <p class="text-xs text-gray-500">Сегодня, 11:20</p>
+                        </div>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-900">-150,00 ₽</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center text-xl">
+                            <i class="ph ph-wallet"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Зарплата</p>
+                            <p class="text-xs text-gray-500">Сегодня, 09:00</p>
+                        </div>
+                    </div>
+                    <span class="text-sm font-semibold text-emerald-500">+2 500,00 ₽</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-brand-light rounded-2xl p-5 relative overflow-hidden">
+            <h4 class="font-semibold text-indigo-900 mb-2 relative z-10">Копите проще</h4>
+            <p class="text-xs text-indigo-700 mb-4 relative z-10">Создайте цель и перенаправляйте часть дохода на неё автоматически</p>
+            <button class="bg-brand text-white text-sm px-4 py-2 rounded-lg relative z-10 hover:bg-indigo-700 transition">Создать цель</button>
+            <i class="ph-fill ph-piggy-bank absolute -bottom-4 -right-4 text-7xl text-indigo-200 opacity-60 transform rotate-[-15deg]"></i>
+        </div>
+    </aside>
+
+    <script>
+        // --- 1. НАСТРОЙКА SUPABASE ---
+        // ВАЖНО: Вставьте сюда свои ключи из дашборда Supabase (Settings -> API)
+        const supabaseUrl = 'YOUR_SUPABASE_URL';
+        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+        
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // --- 2. ПЕРЕМЕННЫЕ СОСТОЯНИЯ ---
+        let accountsData = [];
+        let currentTab = 'Все счета';
+
+        // Форматирование чисел в рубли
+        const formatMoney = (amount) => {
+            return Number(amount).toLocaleString('ru-RU') + ' ₽';
+        };
+
+        // --- 3. ЗАГРУЗКА ДАННЫХ ИЗ БАЗЫ ---
+        async function fetchAccounts() {
+            try {
+                // Пытаемся получить данные
+                const { data, error } = await supabase
+                    .from('accounts')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    throw error;
+                }
+                
+                accountsData = data || [];
+                render(); // Отрисовываем интерфейс
+                
+            } catch (error) {
+                console.error("Ошибка при загрузке:", error);
+                document.getElementById('accounts-list').innerHTML = `
+                    <div class="p-8 text-center text-red-500">
+                        Ошибка загрузки. Проверьте ключи Supabase или создана ли таблица.
+                    </div>`;
+            }
+        }
+
+        // --- 4. ДОБАВЛЕНИЕ НОВОГО СЧЕТА ---
+        async function addAccount() {
+            const name = prompt('Название счета (например, "Моя копилка"):');
+            if (!name) return;
+            
+            const typeInput = prompt('Тип счета (1 - Текущий, 2 - Накопительный, 3 - Кредитный):', '1');
+            const balanceInput = prompt('Начальный баланс:', '0');
+            
+            let type = 'Текущий';
+            if (typeInput === '2') type = 'Накопительный';
+            if (typeInput === '3') type = 'Кредитный';
+            
+            const balance = parseFloat(balanceInput) || 0;
+
+            const { error } = await supabase.from('accounts').insert([
+                { name: name, bank_name: 'Мой Банк', type: type, balance: balance, currency: '₽' }
+            ]);
+
+            if (error) {
+                alert('Не удалось добавить счёт. Смотрите консоль.');
+                console.error(error);
+            } else {
+                fetchAccounts(); // Перезагружаем список
+            }
+        }
+
+        // --- 5. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ---
+        function setTab(tabName) {
+            currentTab = tabName;
+            
+            // Обновляем визуал кнопок вкладок
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                if (btn.dataset.tab === tabName) {
+                    btn.className = 'tab-btn pb-3 font-medium text-brand border-b-2 border-brand';
+                } else {
+                    btn.className = 'tab-btn pb-3 font-medium text-gray-500 hover:text-gray-800';
+                }
+            });
+            
+            renderList(); // Перерисовываем только список
+        }
+
+        // --- 6. ОТРИСОВКА ИНТЕРФЕЙСА ---
+        function render() {
+            // Считаем статистику
+            let total = 0, current = 0, savings = 0, credit = 0;
+            
+            accountsData.forEach(acc => {
+                const bal = Number(acc.balance);
+                total += bal;
+                if (acc.type === 'Текущий') current += bal;
+                if (acc.type === 'Накопительный') savings += bal;
+                if (acc.type === 'Кредитный') credit += bal;
+            });
+
+            // Обновляем карточки
+            document.getElementById('total-balance').innerText = formatMoney(total);
+            document.getElementById('current-balance').innerText = formatMoney(current);
+            document.getElementById('savings-balance').innerText = formatMoney(savings);
+            document.getElementById('credit-balance').innerText = formatMoney(credit);
+
+            renderList();
+        }
+
+        function renderList() {
+            const listEl = document.getElementById('accounts-list');
+            
+            // Фильтруем данные по вкладке
+            const filtered = accountsData.filter(acc => {
+                if (currentTab === 'Все счета') return true;
+                if (currentTab === 'Текущие' && acc.type === 'Текущий') return true;
+                if (currentTab === 'Накопительные' && acc.type === 'Накопительный') return true;
+                if (currentTab === 'Кредитные' && acc.type === 'Кредитный') return true;
+                return false;
+            });
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<div class="p-8 text-center text-gray-500">Нет счетов в этой категории.</div>`;
+                return;
+            }
+
+            // Генерируем HTML для каждого счета
+            let htmlString = '';
+            filtered.forEach(acc => {
+                let iconClass, bgClass, iconName;
+                
+                if (acc.type === 'Текущий') {
+                    bgClass = 'bg-emerald-500'; iconName = 'ph-bank';
+                } else if (acc.type === 'Накопительный') {
+                    bgClass = 'bg-blue-500'; iconName = 'ph-piggy-bank';
+                } else {
+                    bgClass = 'bg-red-400'; iconName = 'ph-credit-card';
+                }
+
+                htmlString += `
+                <div class="p-5 flex items-center justify-between hover:bg-gray-50 transition">
+                    <div class="flex items-center space-x-4 w-1/3">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white text-2xl ${bgClass}">
+                            <i class="ph ${iconName}"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">${acc.name}</h3>
+                            <p class="text-xs text-gray-500">${acc.currency} • ${acc.bank_name || 'Банк'}</p>
+                        </div>
+                    </div>
+                    <div class="w-1/3 text-left">
+                        <p class="text-xs text-gray-500 mb-1">Доступно</p>
+                        <p class="font-semibold text-gray-900">${formatMoney(acc.balance)}</p>
+                    </div>
+                    <div class="w-1/3 text-right pr-4">
+                        <button class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
+                            <i class="ph ph-dots-three text-xl"></i>
+                        </button>
+                    </div>
+                </div>`;
+            });
+
+            listEl.innerHTML = htmlString;
+        }
+
+        // --- ЗАПУСК ПРИЛОЖЕНИЯ ---
+        // Изначально показываем заглушки, пока не прилетят реальные данные из Supabase
+        fetchAccounts();
+
+    </script>
+</body>
+</html>
