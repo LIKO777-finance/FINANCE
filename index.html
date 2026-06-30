@@ -6,7 +6,7 @@
     <title>FinFlow - Счета и Инвестиции</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
@@ -46,6 +46,10 @@
                 <button class="flex items-center space-x-3 w-full px-4 py-3 bg-brand-light text-brand rounded-xl font-medium">
                     <i class="ph ph-wallet text-xl"></i>
                     <span>Счета</span>
+                </button>
+                <button class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition mt-1">
+                    <i class="ph ph-list-dashes text-xl"></i>
+                    <span>Операции</span>
                 </button>
             </nav>
         </div>
@@ -166,7 +170,7 @@
                 <div class="p-8 text-center text-gray-500">Загрузка данных...</div>
             </div>
             
-            <button onclick="openModal()" class="w-full py-4 border-2 border-dashed border-indigo-200 text-indigo-600 rounded-2xl font-medium hover:bg-indigo-50 hover:border-indigo-300 transition flex items-center justify-center space-x-2">
+            <button onclick="openModal()" class="w-full py-4 border-2 border-dashed border-indigo-200 text-indigo-600 rounded-2xl font-medium hover:bg-indigo-50 hover:border-indigo-300 transition flex items-center justify-center space-x-2 mb-8">
                 <i class="ph ph-plus"></i>
                 <span>Добавить счёт, вклад или брокера</span>
             </button>
@@ -177,21 +181,25 @@
         <div class="mb-8">
             <h3 class="font-semibold text-gray-900 mb-4">Сводка по типам</h3>
             <div class="flex items-center space-x-6">
-                <div class="w-24 h-24 rounded-full chart-pie relative flex-shrink-0">
+                <div id="pie-chart" class="w-24 h-24 rounded-full relative flex-shrink-0" style="background: #f3f4f6;">
                     <div class="absolute inset-2 bg-white rounded-full"></div> 
                 </div>
                 <div class="space-y-2 text-sm flex-1">
                     <div class="flex justify-between items-center">
                         <span class="flex items-center text-gray-600"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>Текущие</span>
+                        <span id="stat-current-pct" class="font-medium text-gray-900">0%</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="flex items-center text-gray-600"><span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>Копилки</span>
+                        <span id="stat-savings-pct" class="font-medium text-gray-900">0%</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="flex items-center text-gray-600"><span class="w-2 h-2 rounded-full bg-purple-500 mr-2"></span>Инвест.</span>
+                        <span id="stat-invest-pct" class="font-medium text-gray-900">0%</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="flex items-center text-gray-600"><span class="w-2 h-2 rounded-full bg-red-500 mr-2"></span>Кредит</span>
+                        <span id="stat-credit-pct" class="font-medium text-gray-900">0%</span>
                     </div>
                 </div>
             </div>
@@ -202,17 +210,9 @@
                 <h3 class="font-semibold text-gray-900">Последние операции</h3>
                 <button class="text-sm text-brand hover:underline">Все</button>
             </div>
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center text-xl">
-                            <i class="ph ph-arrows-left-right"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm font-semibold text-gray-900">Покупка акций</p>
-                            <p class="text-xs text-gray-500">Сегодня, 11:20</p>
-                        </div>
-                    </div>
+            <div class="space-y-4" id="recent-transactions-stub">
+                <div class="p-4 text-center text-sm text-gray-400 border border-dashed border-gray-200 rounded-xl">
+                    Скоро здесь появятся операции
                 </div>
             </div>
         </div>
@@ -423,11 +423,11 @@
 
             if (!fromId) { amountBadge.innerText = '?'; feeBadge.innerText = '?'; rateHint.innerText = ''; return; }
 
-            const fromCurr = accountsData.find(a => a.id == fromId).currency;
+            const fromCurr = accountsData.find(a => a.id === fromId).currency;
             amountBadge.innerText = fromCurr; feeBadge.innerText = fromCurr;
 
             if (!toId) { rateHint.innerText = 'Выберите счет зачисления'; return; }
-            const toCurr = accountsData.find(a => a.id == toId).currency;
+            const toCurr = accountsData.find(a => a.id === toId).currency;
 
             if (fromCurr === toCurr) {
                 rateInput.value = '1'; rateInput.disabled = true;
@@ -458,8 +458,8 @@
             const fee = parseFloat(document.getElementById('transfer-fee').value) || 0;
             if (amount <= 0) { alert('Сумма должна быть больше нуля'); return; }
 
-            const fromAcc = accountsData.find(a => a.id == fromId);
-            const toAcc = accountsData.find(a => a.id == toId);
+            const fromAcc = accountsData.find(a => a.id === fromId);
+            const toAcc = accountsData.find(a => a.id === toId);
             const fromCurr = fromAcc.currency;
             const toCurr = toAcc.currency;
 
@@ -467,7 +467,7 @@
             if (fromCurr === toCurr) addedAmount = amount;
             else if (fromCurr === 'Br' && toCurr === '₽') addedAmount = (amount / rate) * 100;
             else if (fromCurr === '₽' && toCurr === 'Br') addedAmount = (amount / 100) * rate;
-            else if (fromCurr === 'Br' && toCurr === '$' || fromCurr === '₽' && toCurr === '$') addedAmount = amount / rate;
+            else if ((fromCurr === 'Br' && toCurr === '$') || (fromCurr === '₽' && toCurr === '$')) addedAmount = amount / rate;
 
             const btn = document.getElementById('transfer-submit-btn'); btn.innerText = 'Обработка...'; btn.disabled = true;
 
@@ -515,50 +515,19 @@
             }).join('');
         }
 
-        function render() {
-            const totals = { 'Br': 0, '₽': 0, '$': 0, '€': 0 };
-            const current = { 'Br': 0, '₽': 0, '$': 0, '€': 0 };
-            const savings = { 'Br': 0, '₽': 0, '$': 0, '€': 0 };
-            const invest = { 'Br': 0, '₽': 0, '$': 0, '€': 0 };
-            const credit = { 'Br': 0, '₽': 0, '$': 0, '€': 0 };
-            
-            let currentCount = 0, savingsCount = 0, investCount = 0, creditCount = 0;
-            
-            accountsData.forEach(acc => {
-                const bal = Number(acc.balance);
-                const curr = acc.currency || '₽';
-
-                if (acc.type === 'Кредитный') totals[curr] -= bal; 
-                else totals[curr] += bal;
-
-                if (acc.type === 'Текущий') { current[curr] += bal; currentCount++; }
-                else if (acc.type === 'Накопительный') { savings[curr] += bal; savingsCount++; }
-                else if (acc.type === 'Инвестиционный') { invest[curr] += bal; investCount++; }
-                else if (acc.type === 'Кредитный') { credit[curr] += bal; creditCount++; }
+        // Логика выпадающего меню с поддержкой UUID
+        function toggleMenu(id) {
+            // Закрываем все остальные открытые меню
+            const allMenus = document.querySelectorAll('[id^="menu-"]');
+            allMenus.forEach(menu => {
+                if(menu.id !== `menu-${id}`) menu.classList.add('hidden');
             });
 
-            document.getElementById('total-balance').innerHTML = renderBalancesHTML(totals);
-            document.getElementById('current-balance').innerHTML = renderBalancesHTML(current);
-            document.getElementById('savings-balance').innerHTML = renderBalancesHTML(savings);
-            document.getElementById('invest-balance').innerHTML = renderBalancesHTML(invest);
-            document.getElementById('credit-balance').innerHTML = renderBalancesHTML(credit);
-
-            document.getElementById('current-count').innerText = getPlural(currentCount, 'счёт', 'счёта', 'счетов');
-            document.getElementById('savings-count').innerText = getPlural(savingsCount, 'счёт', 'счёта', 'счетов');
-            document.getElementById('invest-count').innerText = getPlural(investCount, 'счёт', 'счёта', 'счетов');
-            document.getElementById('credit-count').innerText = getPlural(creditCount, 'счёт', 'счёта', 'счетов');
-
-            renderList();
-        }
-
-        // Логика выпадающего меню
-        function toggleMenu(id) {
-            if (openMenuId && openMenuId !== id) {
-                document.getElementById(`menu-${openMenuId}`)?.classList.add('hidden');
-            }
             const menu = document.getElementById(`menu-${id}`);
-            menu.classList.toggle('hidden');
-            openMenuId = menu.classList.contains('hidden') ? null : id;
+            if (menu) {
+                menu.classList.toggle('hidden');
+            }
+            openMenuId = menu && !menu.classList.contains('hidden') ? id : null;
         }
 
         document.addEventListener('click', (e) => {
@@ -598,33 +567,72 @@
             const badgeClass = currBadgeColors[acc.currency] || 'bg-gray-100 text-gray-700';
 
             return `
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition relative">
-                <div class="flex items-center space-x-4 w-[45%]">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white text-2xl flex-shrink-0 ${bgClass}">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition relative gap-4">
+                <div class="flex items-center gap-4 w-[50%] overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white text-2xl shrink-0 ${bgClass}">
                         <i class="ph ${iconName}"></i>
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <h3 class="font-semibold text-gray-900 truncate">${acc.name}</h3>
-                        <div class="flex items-center space-x-2 mt-1">
-                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${badgeClass}">${acc.currency}</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 ${badgeClass}">${acc.currency}</span>
                             <span class="text-xs text-gray-500 truncate">${acc.bank_name || 'Счёт'}</span>
                         </div>
                     </div>
                 </div>
-                <div class="w-[45%] text-right pr-4">
+                <div class="w-[40%] text-right pr-4 truncate">
                     <p class="text-[11px] uppercase tracking-wider text-gray-400 mb-0.5">Доступно</p>
-                    <p class="font-semibold text-gray-900 text-lg">${formatMoney(acc.balance, acc.currency)}</p>
+                    <p class="font-semibold text-gray-900 text-lg truncate">${formatMoney(acc.balance, acc.currency)}</p>
                 </div>
-                <div class="w-[10%] text-right relative menu-container">
-                    <button onclick="toggleMenu(${acc.id})" class="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition">
+                <div class="w-[10%] flex justify-end relative menu-container">
+                    <button onclick="toggleMenu('${acc.id}')" class="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition">
                         <i class="ph ph-dots-three-vertical text-xl"></i>
                     </button>
                     <div id="menu-${acc.id}" class="hidden absolute right-0 top-full mt-2 w-36 bg-white border border-gray-100 rounded-xl shadow-lg z-10 overflow-hidden text-left py-1">
-                        <button onclick="editAccount(${acc.id})" class="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition"><i class="ph ph-pencil-simple mr-2 text-gray-400"></i>Изменить</button>
-                        <button onclick="deleteAccount(${acc.id})" class="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition"><i class="ph ph-trash mr-2 text-red-400"></i>Удалить</button>
+                        <button onclick="editAccount('${acc.id}')" class="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition"><i class="ph ph-pencil-simple mr-2 text-gray-400"></i>Изменить</button>
+                        <button onclick="deleteAccount('${acc.id}')" class="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition"><i class="ph ph-trash mr-2 text-red-400"></i>Удалить</button>
                     </div>
                 </div>
             </div>`;
+        }
+
+        function updatePieChart() {
+            let sums = { current: 0, savings: 0, invest: 0, credit: 0 };
+            const visualRates = { 'Br': 30, '₽': 1, '$': 90, '€': 100 }; 
+            
+            accountsData.forEach(acc => {
+                let val = Math.abs(Number(acc.balance)) * (visualRates[acc.currency] || 1);
+                if (acc.type === 'Текущий') sums.current += val;
+                else if (acc.type === 'Накопительный') sums.savings += val;
+                else if (acc.type === 'Инвестиционный') sums.invest += val;
+                else if (acc.type === 'Кредитный') sums.credit += val;
+            });
+            
+            let total = sums.current + sums.savings + sums.invest + sums.credit;
+            
+            if (total === 0) {
+               document.getElementById('pie-chart').style.background = '#f3f4f6';
+               return;
+            }
+            
+            let pC = (sums.current / total) * 100;
+            let pS = (sums.savings / total) * 100;
+            let pI = (sums.invest / total) * 100;
+            let pCr = (sums.credit / total) * 100;
+            
+            let grad = `conic-gradient(
+                #10b981 0% ${pC}%, 
+                #3b82f6 ${pC}% ${pC + pS}%, 
+                #a855f7 ${pC + pS}% ${pC + pS + pI}%, 
+                #ef4444 ${pC + pS + pI}% 100%
+            )`;
+            
+            document.getElementById('pie-chart').style.background = grad;
+            
+            document.getElementById('stat-current-pct').innerText = Math.round(pC) + '%';
+            document.getElementById('stat-savings-pct').innerText = Math.round(pS) + '%';
+            document.getElementById('stat-invest-pct').innerText = Math.round(pI) + '%';
+            document.getElementById('stat-credit-pct').innerText = Math.round(pCr) + '%';
         }
 
         function renderList() {
@@ -662,6 +670,43 @@
             }
 
             container.innerHTML = htmlString;
+        }
+
+        function render() {
+            const totals = { 'Br': 0, '₽': 0, '$': 0, '€': 0 };
+            const current = { 'Br': 0, '₽': 0, '$': 0, '€': 0 };
+            const savings = { 'Br': 0, '₽': 0, '$': 0, '€': 0 };
+            const invest = { 'Br': 0, '₽': 0, '$': 0, '€': 0 };
+            const credit = { 'Br': 0, '₽': 0, '$': 0, '€': 0 };
+            
+            let currentCount = 0, savingsCount = 0, investCount = 0, creditCount = 0;
+            
+            accountsData.forEach(acc => {
+                const bal = Number(acc.balance);
+                const curr = acc.currency || '₽';
+
+                if (acc.type === 'Кредитный') totals[curr] -= bal; 
+                else totals[curr] += bal;
+
+                if (acc.type === 'Текущий') { current[curr] += bal; currentCount++; }
+                else if (acc.type === 'Накопительный') { savings[curr] += bal; savingsCount++; }
+                else if (acc.type === 'Инвестиционный') { invest[curr] += bal; investCount++; }
+                else if (acc.type === 'Кредитный') { credit[curr] += bal; creditCount++; }
+            });
+
+            document.getElementById('total-balance').innerHTML = renderBalancesHTML(totals);
+            document.getElementById('current-balance').innerHTML = renderBalancesHTML(current);
+            document.getElementById('savings-balance').innerHTML = renderBalancesHTML(savings);
+            document.getElementById('invest-balance').innerHTML = renderBalancesHTML(invest);
+            document.getElementById('credit-balance').innerHTML = renderBalancesHTML(credit);
+
+            document.getElementById('current-count').innerText = getPlural(currentCount, 'счёт', 'счёта', 'счетов');
+            document.getElementById('savings-count').innerText = getPlural(savingsCount, 'счёт', 'счёта', 'счетов');
+            document.getElementById('invest-count').innerText = getPlural(investCount, 'счёт', 'счёта', 'счетов');
+            document.getElementById('credit-count').innerText = getPlural(creditCount, 'счёт', 'счёта', 'счетов');
+
+            updatePieChart();
+            renderList();
         }
 
         fetchAccounts();
