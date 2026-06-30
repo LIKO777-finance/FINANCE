@@ -133,7 +133,6 @@
     </main>
 
     <aside class="w-80 bg-white border-l border-gray-200 overflow-y-auto p-6 hidden lg:block">
-        
         <div class="mb-8">
             <h3 class="font-semibold text-gray-900 mb-4">Распределение средств</h3>
             <div class="flex items-center space-x-6">
@@ -204,19 +203,19 @@
         const supabaseUrl = 'https://ujjuoyfykkmgcaeujami.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqanVveWZ5a2ttZ2NhZXVqYW1pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3Nzg1MDYsImV4cCI6MjA5ODM1NDUwNn0.Rf9cDJQrsr8mTfaNBgpUabwU3oq81Wcvr8xcyYIoKFg';
         
-        // Исправленная инициализация через объект window
+        // Единственная глобальная инициализация клиента
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // --- 2. ПЕРЕМЕННЫЕ СОСТОЯНИЯ ПРИЛОЖЕНИЯ ---
+        // --- 2. ПЕРЕМЕННЫЕ СОСТОЯНИЯ ---
         let accountsData = [];
         let currentTab = 'Все счета';
 
-        // Функция форматирования числовых значений в валюту
+        // Форматирование денег
         const formatMoney = (amount) => {
             return Number(amount).toLocaleString('ru-RU') + ' ₽';
         };
 
-        // --- 3. ПОЛУЧЕНИЕ ДАННЫХ ИЗ ТАБЛИЦЫ SUPABASE ---
+        // --- 3. ЗАГРУЗКА ДАННЫХ ИЗ БАЗЫ ---
         async function fetchAccounts() {
             try {
                 const { data, error } = await supabase
@@ -224,15 +223,13 @@
                     .select('*')
                     .order('created_at', { ascending: false });
 
-                if (error) {
-                    throw error;
-                }
+                if (error) throw error;
                 
                 accountsData = data || [];
-                render(); // Запуск перерисовки интерфейса с новыми данными
+                render(); 
                 
             } catch (error) {
-                console.error("Ошибка при загрузке данных:", error);
+                console.error("Ошибка при загрузке:", error);
                 document.getElementById('accounts-list').innerHTML = `
                     <div class="p-8 text-center text-red-500">
                         Ошибка загрузки. Проверьте структуру таблицы 'accounts' в Supabase.
@@ -240,9 +237,9 @@
             }
         }
 
-        // --- 4. ИНТЕРАКТИВНОЕ ДОБАВЛЕНИЕ СЧЕТА ---
+        // --- 4. ДОБАВЛЕНИЕ НОВОГО СЧЕТА ---
         async function addAccount() {
-            const name = prompt('Название счета (например, "Основная карта T-Bank"):');
+            const name = prompt('Название счета (например, "Основная карта"):');
             if (!name) return;
             
             const typeInput = prompt('Тип счета:\n1 — Текущий\n2 — Накопительный\n3 — Кредитный', '1');
@@ -259,18 +256,17 @@
             ]);
 
             if (error) {
-                alert('Не удалось сохранить счёт. Проверьте консоль разработчика (F12).');
+                alert('Не удалось добавить счёт. Ошибка выведена в консоль.');
                 console.error(error);
             } else {
-                fetchAccounts(); // Мгновенное обновление данных на странице после вставки
+                fetchAccounts(); 
             }
         }
 
-        // --- 5. ОБРАБОТКА ФИЛЬТРАЦИИ ВКЛАДОК ---
+        // --- 5. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ---
         function setTab(tabName) {
             currentTab = tabName;
             
-            // Смена активных стилей на кнопках вкладок
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 if (btn.dataset.tab === tabName) {
                     btn.className = 'tab-btn pb-3 font-medium text-brand border-b-2 border-brand';
@@ -279,12 +275,11 @@
                 }
             });
             
-            renderList(); // Перерисовка отфильтрованного списка счетов
+            renderList(); 
         }
 
-        // --- 6. ДИНАМИЧЕСКИЙ РЕНДЕРИНГ ИНТЕРФЕЙСА ---
+        // --- 6. ОТРИСОВКА ИНТЕРФЕЙСА ---
         function render() {
-            // Подсчет суммарных балансов по категориям
             let total = 0, current = 0, savings = 0, credit = 0;
             
             accountsData.forEach(acc => {
@@ -295,7 +290,6 @@
                 if (acc.type === 'Кредитный') credit += bal;
             });
 
-            // Запись посчитанных значений в виджеты карточек
             document.getElementById('total-balance').innerText = formatMoney(total);
             document.getElementById('current-balance').innerText = formatMoney(current);
             document.getElementById('savings-balance').innerText = formatMoney(savings);
@@ -307,7 +301,6 @@
         function renderList() {
             const listEl = document.getElementById('accounts-list');
             
-            // Фильтрация локального массива данных на основе выбранной вкладки
             const filtered = accountsData.filter(acc => {
                 if (currentTab === 'Все счета') return true;
                 if (currentTab === 'Текущие' && acc.type === 'Текущий') return true;
@@ -321,7 +314,6 @@
                 return;
             }
 
-            // Формирование структуры списка
             let htmlString = '';
             filtered.forEach(acc => {
                 let bgClass, iconName;
@@ -360,10 +352,8 @@
             listEl.innerHTML = htmlString;
         }
 
-        // --- СТАРТ ПРИЛОЖЕНИЯ ---
-        // Запрос данных из бэкенда при загрузке документа
+        // ЗАПУСК
         fetchAccounts();
-
     </script>
 </body>
 </html>
