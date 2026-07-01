@@ -24,21 +24,11 @@
     <style>
         .modal-enter { opacity: 0; transform: scale(0.95); }
         .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.2s ease-out; }
-        
-        /* Стили для скроллбара */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
-        
-        .chart-donut {
-            background: conic-gradient( #10b981 0% 60%, #e5e7eb 60% 100% );
-            border-radius: 50%;
-        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans flex h-screen overflow-hidden">
 
+    <!-- ЛЕВОЕ МЕНЮ -->
     <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex shrink-0">
         <div>
             <div class="p-6 flex items-center space-x-2">
@@ -64,513 +54,476 @@
                 <p class="text-sm font-semibold text-gray-900">Андрей Иванов</p>
                 <p class="text-xs text-gray-500">Профиль</p>
             </div>
+            <i class="ph ph-caret-down text-gray-400"></i>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto flex flex-col">
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <main class="flex-1 overflow-y-auto">
         <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Операции</h1>
-                <p class="text-sm text-gray-500 mt-1">Все ваши финансовые операции в одном месте</p>
+                <p class="text-sm text-gray-500 mt-1">История доходов, расходов и переводов</p>
             </div>
             <div class="flex items-center space-x-4">
-                <button class="flex items-center space-x-2 border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition text-gray-700">
+                <button onclick="exportToCSV()" class="flex items-center space-x-2 border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition text-gray-700">
                     <i class="ph ph-download-simple"></i>
-                    <span class="hidden sm:inline">Экспорт</span>
+                    <span class="hidden sm:inline">Экспорт CSV</span>
                 </button>
-                <button onclick="openTransactionModal()" class="flex items-center space-x-2 bg-brand text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition">
+                <button onclick="openOpModal()" class="flex items-center space-x-2 bg-brand text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition">
                     <i class="ph ph-plus"></i>
-                    <span class="hidden sm:inline">Новая операция</span>
+                    <span class="hidden sm:inline">Операция</span>
                 </button>
             </div>
         </header>
 
-        <div class="p-8 flex-1 flex flex-col xl:flex-row gap-8">
-            
-            <div class="flex-1 min-w-0">
+        <div class="p-8">
+            <!-- ФИЛЬТРЫ -->
+            <div class="flex flex-wrap justify-between items-center mb-6 border-b border-gray-200 pb-3 gap-4">
+                <div class="flex space-x-6 overflow-x-auto min-w-max" id="op-tabs-container">
+                    <button onclick="setOpTab('Все')" class="op-tab-btn font-medium text-brand border-b-2 border-brand pb-3 -mb-3" data-tab="Все">Все</button>
+                    <button onclick="setOpTab('Доходы')" class="op-tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-3 -mb-3" data-tab="Доходы">Доходы</button>
+                    <button onclick="setOpTab('Расходы')" class="op-tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-3 -mb-3" data-tab="Расходы">Расходы</button>
+                    <button onclick="setOpTab('Переводы')" class="op-tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-3 -mb-3" data-tab="Переводы">Переводы</button>
+                    <button onclick="setOpTab('Инвестиции')" class="op-tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-3 -mb-3" data-tab="Инвестиции">Инвестиции</button>
+                </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <img src="https://flagcdn.com/w20/by.png" class="w-5 h-5 rounded-full object-cover">
-                            <span class="text-sm font-medium text-gray-600">BYN (Белорусский рубль)</span>
-                        </div>
-                        <div class="text-xl font-bold text-emerald-500 mb-1" id="stat-inc-byn">+0 Br</div>
-                        <div class="text-xs text-gray-400">за этот месяц</div>
-                        <i class="ph ph-trend-up absolute right-4 bottom-4 text-4xl text-emerald-50 opacity-50"></i>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <img src="https://flagcdn.com/w20/ru.png" class="w-5 h-5 rounded-full object-cover">
-                            <span class="text-sm font-medium text-gray-600">RUB (Российский рубль)</span>
-                        </div>
-                        <div class="text-xl font-bold text-blue-500 mb-1" id="stat-inc-rub">+0 ₽</div>
-                        <div class="text-xs text-gray-400">за этот месяц</div>
-                        <i class="ph ph-trend-up absolute right-4 bottom-4 text-4xl text-blue-50 opacity-50"></i>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                        <div class="text-sm font-medium text-gray-600 mb-2">Все счета</div>
-                        <div class="text-xl font-bold text-gray-900 mb-1" id="stat-accounts-count">0</div>
-                        <div class="text-xs text-gray-400">активных счетов</div>
-                        <i class="ph ph-cards absolute right-4 bottom-4 text-4xl text-purple-50 opacity-50"></i>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                        <div class="text-sm font-medium text-gray-600 mb-2">Всего расходов</div>
-                        <div class="text-xl font-bold text-red-500 mb-1" id="stat-exp-total">-0</div>
-                        <div class="text-xs text-gray-400">за этот месяц</div>
-                        <i class="ph ph-trend-down absolute right-4 bottom-4 text-4xl text-red-50 opacity-50"></i>
-                    </div>
+                <div class="ml-auto">
+                    <select id="op-currency-filter" onchange="renderOperations()" class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg text-gray-700 outline-none hover:border-brand focus:border-brand transition bg-white cursor-pointer">
+                        <option value="All">Все валюты</option>
+                        <option value="Br">Только Br</option>
+                        <option value="₽">Только ₽</option>
+                        <option value="$">Только $</option>
+                        <option value="€">Только €</option>
+                    </select>
                 </div>
-
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                    <div class="flex space-x-6 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0" id="tabs-container">
-                        <button onclick="setTab('Все')" class="tab-btn font-medium text-brand border-b-2 border-brand pb-2" data-tab="Все">Все операции</button>
-                        <button onclick="setTab('Доход')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-2" data-tab="Доход">Доходы</button>
-                        <button onclick="setTab('Расход')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-2" data-tab="Расход">Расходы</button>
-                        <button onclick="setTab('Перевод')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-2" data-tab="Перевод">Переводы</button>
-                    </div>
-                    <div class="flex items-center space-x-3 w-full sm:w-auto">
-                        <div class="relative w-full sm:w-64">
-                            <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" id="search-input" onkeyup="renderTransactions()" placeholder="Поиск по операциям..." class="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand transition">
-                        </div>
-                    </div>
-                </div>
-
-                <div id="transactions-container" class="space-y-6 pb-10">
-                    <div class="text-center py-10 text-gray-400">Загрузка данных...</div>
-                </div>
-
             </div>
 
-            <aside class="w-full xl:w-80 shrink-0 space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-gray-900">Сводка за месяц</h3>
-                        <span class="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-lg">Текущий</span>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm text-gray-500 mb-1">Доходы</p>
-                                <p class="font-semibold text-emerald-600 text-sm" id="sidebar-inc-byn">0 Br</p>
-                                <p class="font-semibold text-emerald-600 text-sm" id="sidebar-inc-rub">0 ₽</p>
-                            </div>
-                            <div class="w-12 h-12 chart-donut relative" style="background: conic-gradient(#10b981 0% 100%);">
-                                <div class="absolute inset-1.5 bg-white rounded-full"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="border-t border-gray-100"></div>
-
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm text-gray-500 mb-1">Расходы</p>
-                                <p class="font-semibold text-red-500 text-sm" id="sidebar-exp-byn">0 Br</p>
-                                <p class="font-semibold text-red-500 text-sm" id="sidebar-exp-rub">0 ₽</p>
-                            </div>
-                            <div class="w-12 h-12 chart-donut relative" style="background: conic-gradient(#ef4444 0% 100%);">
-                                <div class="absolute inset-1.5 bg-white rounded-full"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-brand-light p-6 rounded-2xl border border-indigo-100 relative overflow-hidden">
-                    <h3 class="font-bold text-brand mb-2 relative z-10">Аналитика активна</h3>
-                    <p class="text-sm text-indigo-800 relative z-10">Добавляйте операции регулярно, чтобы графики отображали точную картину ваших финансов.</p>
-                    <i class="ph ph-chart-pie-slice absolute -right-4 -bottom-4 text-6xl text-brand opacity-10"></i>
-                </div>
-            </aside>
+            <!-- СПИСОК ОПЕРАЦИЙ -->
+            <div id="operations-list" class="space-y-3 pb-10">
+                <div class="p-8 text-center text-gray-500">Загрузка операций...</div>
+            </div>
         </div>
     </main>
 
-    <div id="transaction-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 p-4 backdrop-blur-sm transition-opacity">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform" id="transaction-modal-content">
+    <!-- ПРАВОЕ МЕНЮ (СВОДКА) -->
+    <aside class="w-80 bg-white border-l border-gray-200 overflow-y-auto p-6 hidden lg:block shrink-0">
+        <div class="mb-8">
+            <h3 class="font-semibold text-gray-900 mb-4 text-sm uppercase tracking-wider">Топ-3 крупные операции</h3>
+            <div id="top-operations-container" class="space-y-3">
+                <!-- Заполняется через JS -->
+            </div>
+        </div>
+
+        <div>
+            <h3 class="font-semibold text-gray-900 mb-4 text-sm uppercase tracking-wider">Топ категории</h3>
+            <div class="space-y-4">
+                <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                    <p class="text-xs text-red-500 font-semibold mb-1">ГЛАВНЫЙ РАСХОД</p>
+                    <p id="top-expense-cat" class="text-gray-900 font-medium">-</p>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                    <p class="text-xs text-emerald-600 font-semibold mb-1">ГЛАВНЫЙ ДОХОД</p>
+                    <p id="top-income-cat" class="text-gray-900 font-medium">-</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- МОДАЛКА ДОБАВЛЕНИЯ/РЕДАКТИРОВАНИЯ ОПЕРАЦИИ -->
+    <div id="op-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 transition-opacity p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform" id="op-modal-content">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-900">Новая операция</h3>
-                <button onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-700 transition">
+                <h3 class="text-xl font-bold text-gray-900" id="op-modal-title">Новая операция</h3>
+                <button onclick="closeOpModal()" class="text-gray-400 hover:text-gray-700 transition">
                     <i class="ph ph-x text-2xl"></i>
                 </button>
             </div>
             
-            <div class="flex bg-gray-100 p-1 rounded-xl mb-6">
-                <button type="button" onclick="setOpType('Расход')" id="btn-type-expense" class="flex-1 py-1.5 text-sm font-medium rounded-lg bg-white shadow-sm text-gray-900 transition">Расход</button>
-                <button type="button" onclick="setOpType('Доход')" id="btn-type-income" class="flex-1 py-1.5 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-900 transition">Доход</button>
-                <button type="button" onclick="setOpType('Перевод')" id="btn-type-transfer" class="flex-1 py-1.5 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-900 transition">Перевод</button>
-            </div>
+            <form onsubmit="submitOperation(event)" class="space-y-4">
+                <input type="hidden" id="op-id"> <!-- Для редактирования -->
 
-            <form onsubmit="submitTransaction(event)" class="space-y-4">
-                <input type="hidden" id="op-type" value="Расход">
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Сумма</label>
-                    <div class="relative">
-                        <input type="number" id="op-amount" required placeholder="0.00" step="0.01" class="w-full px-4 py-3 text-lg font-semibold border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition">
-                    </div>
-                </div>
-
-                <div id="field-account-from">
-                    <label class="block text-sm font-medium text-gray-700 mb-1" id="label-acc-from">Со счета списания</label>
-                    <select id="op-account-id" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
-                </div>
-
-                <div id="field-account-to" class="hidden">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">На счет зачисления</label>
-                    <select id="op-to-account-id" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4" id="field-category-date">
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
-                        <select id="op-category" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
-                            <option value="Продукты">🛒 Продукты</option>
-                            <option value="Кафе и рестораны">☕ Кафе</option>
-                            <option value="Транспорт">🚗 Транспорт</option>
-                            <option value="Зарплата">💰 Зарплата</option>
-                            <option value="Перевод">🔄 Перевод</option>
-                            <option value="Разное">📦 Разное</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Тип</label>
+                        <select id="op-type" onchange="updateFormFields()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand outline-none transition bg-white">
+                            <option value="Расход">Расход</option>
+                            <option value="Доход">Доход</option>
+                            <option value="Перевод">Перевод</option>
+                            <option value="Инвестиция">Инвестиция</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Дата</label>
-                        <input type="date" id="op-date" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                        <input type="date" id="op-date" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand outline-none transition">
                     </div>
                 </div>
 
-                <div id="field-description">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Описание / Название (необязательно)</label>
-                    <input type="text" id="op-description" placeholder="Например: Пятёрочка" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Сумма</label>
+                        <input type="number" id="op-amount" required placeholder="0.00" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Валюта</label>
+                        <select id="op-currency" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand outline-none transition bg-white">
+                            <option value="Br">Br (BYN)</option>
+                            <option value="₽">₽ (RUB)</option>
+                            <option value="$">$ (USD)</option>
+                            <option value="€">€ (EUR)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Контейнер для категорий (только Доход/Расход) -->
+                <div id="category-container" class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
+                        <select id="op-category" onchange="updateSubcategories()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand outline-none transition bg-white">
+                            <!-- Заполняется JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Подкатегория</label>
+                        <select id="op-subcategory" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand outline-none transition bg-white">
+                            <!-- Заполняется JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Счет</label>
+                    <select id="op-account" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand outline-none transition bg-white">
+                        <option value="Мой кошелек">Мой кошелек (заглушка)</option>
+                        <!-- В реале тут счета из базы -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Примечание</label>
+                    <input type="text" id="op-notes" placeholder="Комментарий к операции..." class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand outline-none transition">
                 </div>
                 
-                <button type="submit" class="w-full bg-brand text-white font-medium py-3 rounded-xl hover:bg-indigo-700 transition mt-6 shadow-md" id="submit-btn">
-                    Добавить операцию
+                <button type="submit" class="w-full bg-brand text-white font-medium py-3 rounded-xl hover:bg-indigo-700 transition mt-6" id="op-submit-btn">
+                    Сохранить операцию
                 </button>
             </form>
         </div>
     </div>
 
     <script>
-        // Твои доступы к Supabase (оставлены твои ключи)
-        const supabaseUrl = 'https://ujjuoyfykkmgcaeujami.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqanVveWZ5a2ttZ2NhZXVqYW1pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3Nzg1MDYsImV4cCI6MjA5ODM1NDUwNn0.Rf9cDJQrsr8mTfaNBgpUabwU3oq81Wcvr8xcyYIoKFg';
-        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+        // Имитация базы данных (пока не подключим Supabase для операций)
+        let operationsData = [
+            { id: 1, type: 'Расход', amount: 150.50, currency: 'Br', category: 'Еда', subcategory: 'мясо', account: 'Карта Альфа', date: '2023-10-25', notes: 'Закупка на неделю' },
+            { id: 2, type: 'Доход', amount: 5000, currency: '₽', category: 'Tutoring', subcategory: 'TOEFL', account: 'Тинькофф', date: '2023-10-24', notes: 'Ученик Иван' },
+            { id: 3, type: 'Расход', amount: 300, currency: '₽', category: 'Развлечения', subcategory: 'подписки', account: 'Тинькофф', date: '2023-10-23', notes: 'Spotify' },
+            { id: 4, type: 'Инвестиция', amount: 100, currency: '$', category: 'Акции', subcategory: '', account: 'Брокер', date: '2023-10-22', notes: 'S&P 500' }
+        ];
 
-        let accountsData = [];
-        let transactionsData = [];
-        let currentTab = 'Все';
+        let currentOpTab = 'Все';
+        let openMenuId = null;
 
-        // Устанавливаем сегодняшнюю дату по умолчанию
-        document.getElementById('op-date').valueAsDate = new Date();
+        // Структура категорий и подкатегорий
+        const categoriesData = {
+            'Расход': {
+                'Основное': ['квартира', 'коммуналка', 'интернет', 'телефоны', 'налоги бел', 'налоги рос', 'налоги 13%', 'подписки'],
+                'Еда': ['мясо', 'колбасы', 'хлебобулочные', 'молочка', 'крупы', 'консервы', 'рыба', 'специи', 'снэки', 'фрукты и овощи', 'вода', 'напитки', 'алкоголь', 'масло', 'конфеты', 'чай', 'на заказ', 'соусы', 'пакет'],
+                'Машина': ['бензин', 'сервис', 'мойка'],
+                'Развлечения': ['развлечения', 'красота', 'гигиена', 'медицина', 'одежда', 'обувь', 'аксессуары', 'книги', 'подарки', 'электроника', 'учеба'],
+                'Дом': ['декор', 'чистящие', 'принадлежности', 'гигиена дома', 'цветы'],
+                'Путешествия': ['такси', 'виза', 'карманные']
+            },
+            'Доход': {
+                'Tutoring': ['general', 'TOEFL'],
+                'Мама': [],
+                'Подарок': [],
+                'Подработка': [],
+                'Проценты': [],
+                'Кэшбэк': []
+            },
+            'Перевод': { 'Перевод между счетами': [] },
+            'Инвестиция': { 'Покупка активов': [], 'Пополнение брокера': [] }
+        };
 
         const formatMoney = (amount, currency = '₽') => {
             return Number(amount).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ' + currency;
         };
 
-        // Инициализация загрузки данных
-        async function initData() {
-            try {
-                // 1. Грузим счета
-                const { data: accs, error: accErr } = await supabaseClient.from('accounts').select('*');
-                if (accErr) throw accErr;
-                accountsData = accs || [];
-                
-                // Обновляем счетчик счетов
-                document.getElementById('stat-accounts-count').innerText = accountsData.length;
+        const formatDate = (dateStr) => {
+            return new Date(dateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+        };
 
-                // 2. Грузим транзакции
-                const { data: trans, error: transErr } = await supabaseClient.from('transactions').select('*').order('created_at', { ascending: false });
-                if (transErr) throw transErr;
-                transactionsData = trans || [];
+        /* --- ЛОГИКА ВКЛАДОК И ФИЛЬТРОВ --- */
+        function setOpTab(tabName) {
+            currentOpTab = tabName;
+            document.querySelectorAll('.op-tab-btn').forEach(btn => {
+                btn.className = btn.dataset.tab === tabName 
+                    ? 'op-tab-btn font-medium text-brand border-b-2 border-brand pb-3 -mb-3'
+                    : 'op-tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-3 -mb-3';
+            });
+            renderOperations();
+        }
 
-                renderTransactions();
-                calculateStats();
-            } catch (error) {
-                console.error("Ошибка загрузки:", error);
-                document.getElementById('transactions-container').innerHTML = `
-                    <div class="p-8 text-center text-red-500 bg-white rounded-2xl border border-red-100">
-                        Ошибка загрузки. Проверьте консоль или убедитесь, что создали таблицу transactions.
-                    </div>`;
+        /* --- МЕНЮ ОПЕРАЦИЙ (РЕДАКТИРОВАНИЕ/УДАЛЕНИЕ) --- */
+        function toggleOpMenu(id, event) {
+            event.stopPropagation();
+            const allMenus = document.querySelectorAll('[id^="op-menu-"]');
+            allMenus.forEach(menu => {
+                if(menu.id !== `op-menu-${id}`) menu.classList.add('hidden');
+            });
+            const menu = document.getElementById(`op-menu-${id}`);
+            if (menu) menu.classList.toggle('hidden');
+            openMenuId = menu && !menu.classList.contains('hidden') ? id : null;
+        }
+
+        document.addEventListener('click', (e) => {
+            if (openMenuId && !e.target.closest('.op-menu-container')) {
+                document.getElementById(`op-menu-${openMenuId}`)?.classList.add('hidden');
+                openMenuId = null;
+            }
+        });
+
+        function editOperation(id) {
+            const op = operationsData.find(o => o.id == id);
+            if(!op) return;
+            
+            document.getElementById('op-id').value = op.id;
+            document.getElementById('op-type').value = op.type;
+            document.getElementById('op-date').value = op.date;
+            document.getElementById('op-amount').value = op.amount;
+            document.getElementById('op-currency').value = op.currency;
+            document.getElementById('op-notes').value = op.notes || '';
+            
+            updateFormFields();
+            document.getElementById('op-category').value = op.category;
+            updateSubcategories();
+            document.getElementById('op-subcategory').value = op.subcategory;
+
+            document.getElementById('op-modal-title').innerText = 'Редактировать операцию';
+            openOpModal(true);
+            document.getElementById(`op-menu-${id}`)?.classList.add('hidden');
+        }
+
+        function deleteOperation(id) {
+            if(confirm('Удалить эту операцию? Это действие нельзя отменить.')) {
+                operationsData = operationsData.filter(o => o.id != id);
+                renderOperations();
             }
         }
 
-        /* --- ЛОГИКА ОТОБРАЖЕНИЯ ОПЕРАЦИЙ --- */
-        function setTab(tabName) {
-            currentTab = tabName;
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                if (btn.dataset.tab === tabName) {
-                    btn.className = 'tab-btn font-medium text-brand border-b-2 border-brand pb-2 transition';
-                } else {
-                    btn.className = 'tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-2';
-                }
-            });
-            renderTransactions();
-        }
-
-        // Вспомогательная функция для иконок и цветов категорий
-        function getCategoryStyle(category, type) {
-            if (type === 'Перевод') return { icon: 'ph-arrows-left-right', color: 'bg-purple-100 text-purple-600', badge: 'bg-purple-50 text-purple-600' };
+        /* --- ОТОБРАЖЕНИЕ ОПЕРАЦИЙ И СТАТИСТИКИ --- */
+        function renderOperations() {
+            const container = document.getElementById('operations-list');
+            const currencyFilter = document.getElementById('op-currency-filter').value;
             
-            const styles = {
-                'Продукты': { icon: 'ph-shopping-cart', color: 'bg-orange-100 text-orange-600', badge: 'bg-orange-50 text-orange-600' },
-                'Кафе и рестораны': { icon: 'ph-coffee', color: 'bg-yellow-100 text-yellow-600', badge: 'bg-yellow-50 text-yellow-600' },
-                'Транспорт': { icon: 'ph-car', color: 'bg-blue-100 text-blue-600', badge: 'bg-blue-50 text-blue-600' },
-                'Зарплата': { icon: 'ph-money', color: 'bg-emerald-100 text-emerald-600', badge: 'bg-emerald-50 text-emerald-600' },
-            };
-            return styles[category] || { icon: 'ph-receipt', color: 'bg-gray-100 text-gray-600', badge: 'bg-gray-100 text-gray-600' };
-        }
+            let filtered = operationsData;
+            
+            // Фильтр по типу
+            if (currentOpTab === 'Доходы') filtered = filtered.filter(o => o.type === 'Доход');
+            if (currentOpTab === 'Расходы') filtered = filtered.filter(o => o.type === 'Расход');
+            if (currentOpTab === 'Переводы') filtered = filtered.filter(o => o.type === 'Перевод');
+            if (currentOpTab === 'Инвестиции') filtered = filtered.filter(o => o.type === 'Инвестиция');
 
-        function renderTransactions() {
-            const container = document.getElementById('transactions-container');
-            const searchQuery = document.getElementById('search-input').value.toLowerCase();
-            container.innerHTML = '';
+            // Фильтр по валюте
+            if (currencyFilter !== 'All') {
+                filtered = filtered.filter(o => o.currency === currencyFilter);
+            }
 
-            // Фильтрация
-            let filtered = transactionsData.filter(t => {
-                const matchTab = currentTab === 'Все' || t.type === currentTab;
-                const matchSearch = (t.description || '').toLowerCase().includes(searchQuery) || 
-                                    (t.category || '').toLowerCase().includes(searchQuery);
-                return matchTab && matchSearch;
-            });
+            // Сортировка по дате (новые сверху)
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400 bg-white rounded-2xl border border-gray-200 border-dashed">Операций пока нет.</div>`;
-                return;
+                container.innerHTML = `<div class="p-8 text-center text-gray-400 bg-white rounded-2xl border border-gray-100 border-dashed">Операций не найдено.</div>`;
+            } else {
+                container.innerHTML = filtered.map(op => createOpHTML(op)).join('');
             }
 
-            // Группировка по датам
-            const grouped = {};
-            filtered.forEach(t => {
-                const dateObj = new Date(t.created_at);
-                const today = new Date();
-                const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-                
-                let dateStr = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-                if (dateObj.toDateString() === today.toDateString()) dateStr = 'Сегодня, ' + dateStr;
-                else if (dateObj.toDateString() === yesterday.toDateString()) dateStr = 'Вчера, ' + dateStr;
+            updateSidebarStats();
+        }
 
-                if (!grouped[dateStr]) grouped[dateStr] = [];
-                grouped[dateStr].push(t);
-            });
+        function createOpHTML(op) {
+            let iconClass, iconName, amountColor, sign;
+            
+            if (op.type === 'Доход') {
+                iconClass = 'bg-emerald-100 text-emerald-600'; iconName = 'ph-arrow-down-left'; amountColor = 'text-emerald-600'; sign = '+';
+            } else if (op.type === 'Расход') {
+                iconClass = 'bg-red-100 text-red-600'; iconName = 'ph-arrow-up-right'; amountColor = 'text-gray-900'; sign = '-';
+            } else if (op.type === 'Инвестиция') {
+                iconClass = 'bg-purple-100 text-purple-600'; iconName = 'ph-trend-up'; amountColor = 'text-purple-600'; sign = '';
+            } else {
+                iconClass = 'bg-blue-100 text-blue-600'; iconName = 'ph-arrows-left-right'; amountColor = 'text-gray-900'; sign = '';
+            }
 
-            let html = '';
-            for (const [date, transList] of Object.entries(grouped)) {
-                html += `
-                <div class="mb-6">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">${date}</h3>
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100">
-                        ${transList.map(t => {
-                            const time = new Date(t.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                            const style = getCategoryStyle(t.category, t.type);
-                            const acc = accountsData.find(a => a.id === t.account_id);
-                            const accName = acc ? acc.name : 'Удаленный счет';
-                            
-                            let amountHtml = '';
-                            let titleHtml = t.description || t.category;
+            let categoryText = op.category;
+            if (op.subcategory) categoryText += ` <span class="text-gray-400 text-xs">/ ${op.subcategory}</span>`;
 
-                            if (t.type === 'Доход') {
-                                amountHtml = `<span class="font-semibold text-emerald-500 whitespace-nowrap">+${formatMoney(t.amount, t.currency)}</span>`;
-                            } else if (t.type === 'Расход') {
-                                amountHtml = `<span class="font-semibold text-gray-900 whitespace-nowrap">-${formatMoney(t.amount, t.currency)}</span>`;
-                            } else if (t.type === 'Перевод') {
-                                const toAcc = accountsData.find(a => a.id === t.to_account_id);
-                                const toName = toAcc ? toAcc.name : '?';
-                                titleHtml = `Перевод средств`;
-                                amountHtml = `<span class="font-semibold text-gray-900 whitespace-nowrap">-${formatMoney(t.amount, t.currency)}</span>`;
-                                // Доп строка для перевода
-                                accNameHtml = `<span class="text-xs text-gray-500">${accName} → ${toName}</span>`;
-                            }
-
-                            return `
-                            <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition group">
-                                <div class="flex items-center space-x-4 min-w-0">
-                                    <div class="text-xs text-gray-400 w-10 shrink-0 text-center">${time}</div>
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${style.color}">
-                                        <i class="ph ${style.icon} text-lg"></i>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <p class="font-semibold text-gray-900 truncate text-sm sm:text-base">${titleHtml}</p>
-                                        ${t.type === 'Перевод' 
-                                            ? `<p class="text-xs text-gray-500 truncate">${accName} &rarr; ${accountsData.find(a => a.id === t.to_account_id)?.name}</p>`
-                                            : `<p class="text-xs text-gray-500 truncate">${accName}</p>`
-                                        }
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-4 shrink-0 pl-4">
-                                    <span class="hidden sm:inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${style.badge}">${t.category}</span>
-                                    <div class="text-right">${amountHtml}</div>
-                                </div>
-                            </div>`;
-                        }).join('')}
+            return `
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition gap-4">
+                <div class="flex items-center gap-4 w-[60%]">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${iconClass}">
+                        <i class="ph ${iconName}"></i>
                     </div>
-                </div>`;
+                    <div class="min-w-0">
+                        <h3 class="font-medium text-gray-900 truncate">${categoryText}</h3>
+                        <p class="text-xs text-gray-500 truncate mt-0.5">${formatDate(op.date)} • ${op.account} ${op.notes ? `• <i>${op.notes}</i>` : ''}</p>
+                    </div>
+                </div>
+                <div class="w-[30%] text-right pr-2">
+                    <p class="font-semibold ${amountColor} text-base">${sign}${formatMoney(op.amount, op.currency)}</p>
+                </div>
+                <div class="w-[10%] flex justify-end relative op-menu-container">
+                    <button onclick="toggleOpMenu('${op.id}', event)" class="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition">
+                        <i class="ph ph-dots-three-vertical text-lg"></i>
+                    </button>
+                    <div id="op-menu-${op.id}" class="hidden absolute right-0 top-full mt-1 w-32 bg-white border border-gray-100 rounded-xl shadow-lg z-10 py-1">
+                        <button onclick="editOperation('${op.id}')" class="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition"><i class="ph ph-pencil-simple mr-2"></i>Изменить</button>
+                        <button onclick="deleteOperation('${op.id}')" class="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition"><i class="ph ph-trash mr-2"></i>Удалить</button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function updateSidebarStats() {
+            // Топ 3 операции по абсолютной величине (без учета валюты для простоты примера)
+            const sortedOps = [...operationsData].sort((a, b) => b.amount - a.amount).slice(0, 3);
+            const topOpsContainer = document.getElementById('top-operations-container');
+            
+            topOpsContainer.innerHTML = sortedOps.map(op => `
+                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900 truncate max-w-[120px]">${op.category}</p>
+                        <p class="text-xs text-gray-500">${formatDate(op.date)}</p>
+                    </div>
+                    <span class="text-sm font-bold text-gray-900">${formatMoney(op.amount, op.currency)}</span>
+                </div>
+            `).join('');
+
+            // Считаем топ категории
+            let expCats = {}, incCats = {};
+            operationsData.forEach(op => {
+                if(op.type === 'Расход') expCats[op.category] = (expCats[op.category] || 0) + 1;
+                if(op.type === 'Доход') incCats[op.category] = (incCats[op.category] || 0) + 1;
+            });
+
+            const topExp = Object.keys(expCats).sort((a,b) => expCats[b] - expCats[a])[0] || 'Нет данных';
+            const topInc = Object.keys(incCats).sort((a,b) => incCats[b] - incCats[a])[0] || 'Нет данных';
+
+            document.getElementById('top-expense-cat').innerText = topExp;
+            document.getElementById('top-income-cat').innerText = topInc;
+        }
+
+        /* --- ЭКСПОРТ В CSV --- */
+        function exportToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // \uFEFF для поддержки кириллицы в Excel
+            csvContent += "Дата,Тип,Категория,Подкатегория,Сумма,Валюта,Счет,Примечание\n";
+            
+            operationsData.forEach(op => {
+                let row = [
+                    op.date, op.type, op.category, op.subcategory || '', 
+                    op.amount, op.currency, op.account, op.notes || ''
+                ].map(v => `"${v}"`).join(","); // Кавычки спасают от запятых в тексте
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `operations_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        /* --- МОДАЛЬНОЕ ОКНО И ФОРМА --- */
+        const opModal = document.getElementById('op-modal');
+        const opModalContent = document.getElementById('op-modal-content');
+
+        function openOpModal(isEdit = false) {
+            if(!isEdit) {
+                document.getElementById('op-id').value = '';
+                document.getElementById('op-modal-title').innerText = 'Новая операция';
+                document.getElementById('op-date').valueAsDate = new Date();
+                document.getElementById('op-type').value = 'Расход';
+                updateFormFields();
             }
-            container.innerHTML = html;
+            opModal.classList.remove('hidden'); opModal.classList.add('flex');
+            setTimeout(() => { opModalContent.classList.remove('scale-95'); opModalContent.classList.add('scale-100'); }, 10);
         }
 
-        function calculateStats() {
-            let incByn = 0, incRub = 0, expByn = 0, expRub = 0;
-            const currentMonth = new Date().getMonth();
-
-            transactionsData.forEach(t => {
-                const d = new Date(t.created_at);
-                if (d.getMonth() === currentMonth) {
-                    if (t.type === 'Доход') {
-                        if (t.currency === 'Br') incByn += Number(t.amount);
-                        if (t.currency === '₽') incRub += Number(t.amount);
-                    } else if (t.type === 'Расход') {
-                        if (t.currency === 'Br') expByn += Number(t.amount);
-                        if (t.currency === '₽') expRub += Number(t.amount);
-                    }
-                }
-            });
-
-            document.getElementById('stat-inc-byn').innerText = `+${formatMoney(incByn, 'Br')}`;
-            document.getElementById('stat-inc-rub').innerText = `+${formatMoney(incRub, '₽')}`;
-            
-            // Суммируем расходы грубо для карточки (приводим к рублям условно для красоты, либо выводим две валюты)
-            // Здесь просто покажем траты в основной валюте (например ₽)
-            document.getElementById('stat-exp-total').innerText = `-${formatMoney(expRub, '₽')}`;
-
-            // Боковая панель
-            document.getElementById('sidebar-inc-byn').innerText = formatMoney(incByn, 'Br');
-            document.getElementById('sidebar-inc-rub').innerText = formatMoney(incRub, '₽');
-            document.getElementById('sidebar-exp-byn').innerText = formatMoney(expByn, 'Br');
-            document.getElementById('sidebar-exp-rub').innerText = formatMoney(expRub, '₽');
-        }
-
-
-        /* --- ЛОГИКА ДОБАВЛЕНИЯ ОПЕРАЦИЙ --- */
-        const modal = document.getElementById('transaction-modal');
-        const modalContent = document.getElementById('transaction-modal-content');
-
-        function openTransactionModal() {
-            if (accountsData.length === 0) { alert("Сначала создайте хотя бы один счет в разделе 'Счета'."); return; }
-            
-            let optionsHtml = '';
-            accountsData.forEach(acc => {
-                optionsHtml += `<option value="${acc.id}">${acc.name} (${formatMoney(acc.balance, acc.currency)})</option>`;
-            });
-            document.getElementById('op-account-id').innerHTML = optionsHtml;
-            document.getElementById('op-to-account-id').innerHTML = optionsHtml;
-
-            modal.classList.remove('hidden'); modal.classList.add('flex');
-            setTimeout(() => { modalContent.classList.remove('scale-95'); modalContent.classList.add('scale-100'); }, 10);
-        }
-
-        function closeTransactionModal() {
-            modalContent.classList.remove('scale-100'); modalContent.classList.add('scale-95');
+        function closeOpModal() {
+            opModalContent.classList.remove('scale-100'); opModalContent.classList.add('scale-95');
             setTimeout(() => {
-                modal.classList.add('hidden'); modal.classList.remove('flex');
+                opModal.classList.add('hidden'); opModal.classList.remove('flex');
                 document.getElementById('op-amount').value = '';
-                document.getElementById('op-description').value = '';
+                document.getElementById('op-notes').value = '';
             }, 150);
         }
 
-        function setOpType(type) {
-            document.getElementById('op-type').value = type;
-            const btns = ['expense', 'income', 'transfer'];
-            btns.forEach(b => {
-                const el = document.getElementById(`btn-type-${b}`);
-                el.className = 'flex-1 py-1.5 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-900 transition';
+        function updateFormFields() {
+            const type = document.getElementById('op-type').value;
+            const catSelect = document.getElementById('op-category');
+            
+            catSelect.innerHTML = '';
+            
+            const cats = Object.keys(categoriesData[type] || {});
+            cats.forEach(cat => {
+                catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
             });
             
-            const activeBtn = type === 'Расход' ? 'expense' : (type === 'Доход' ? 'income' : 'transfer');
-            document.getElementById(`btn-type-${activeBtn}`).className = 'flex-1 py-1.5 text-sm font-medium rounded-lg bg-white shadow-sm text-gray-900 transition';
-
-            // Настройка полей формы в зависимости от типа
-            if (type === 'Перевод') {
-                document.getElementById('field-account-to').classList.remove('hidden');
-                document.getElementById('field-category-date').classList.add('hidden');
-                document.getElementById('field-description').classList.add('hidden');
-                document.getElementById('label-acc-from').innerText = 'Со счета списания';
-                document.getElementById('op-account-id').required = true;
-                document.getElementById('op-to-account-id').required = true;
-            } else {
-                document.getElementById('field-account-to').classList.add('hidden');
-                document.getElementById('field-category-date').classList.remove('hidden');
-                document.getElementById('field-description').classList.remove('hidden');
-                document.getElementById('label-acc-from').innerText = type === 'Доход' ? 'На какой счет зачислить' : 'С какого счета списать';
-                document.getElementById('op-to-account-id').required = false;
-            }
+            updateSubcategories();
         }
 
-        async function submitTransaction(e) {
-            e.preventDefault();
-            const btn = document.getElementById('submit-btn'); 
-            btn.innerText = 'Сохранение...'; btn.disabled = true;
-
+        function updateSubcategories() {
             const type = document.getElementById('op-type').value;
-            const amount = parseFloat(document.getElementById('op-amount').value) || 0;
-            const accountId = document.getElementById('op-account-id').value;
-            const dateInput = document.getElementById('op-date').value;
+            const cat = document.getElementById('op-category').value;
+            const subSelect = document.getElementById('op-subcategory');
             
-            // Собираем данные операции
-            const dateObj = new Date(dateInput);
-            dateObj.setHours(new Date().getHours()); // Сохраняем примерное время
-            const createdAt = dateObj.toISOString();
-
-            const account = accountsData.find(a => a.id === accountId);
-            if (!account || amount <= 0) {
-                alert('Проверьте сумму и выбранный счет.');
-                btn.innerText = 'Добавить операцию'; btn.disabled = false;
-                return;
-            }
-
-            try {
-                if (type === 'Расход' || type === 'Доход') {
-                    const category = document.getElementById('op-category').value;
-                    const description = document.getElementById('op-description').value;
-
-                    // 1. Запись в историю
-                    const { error: txErr } = await supabaseClient.from('transactions').insert([{
-                        type: type, amount: amount, currency: account.currency,
-                        category: category, description: description, account_id: accountId,
-                        created_at: createdAt
-                    }]);
-                    if (txErr) throw txErr;
-
-                    // 2. Обновление баланса счета
-                    const newBalance = type === 'Доход' ? Number(account.balance) + amount : Number(account.balance) - amount;
-                    const { error: accErr } = await supabaseClient.from('accounts').update({ balance: newBalance }).eq('id', accountId);
-                    if (accErr) throw accErr;
-
-                } else if (type === 'Перевод') {
-                    const toAccountId = document.getElementById('op-to-account-id').value;
-                    if (accountId === toAccountId) throw new Error('Нельзя перевести на тот же самый счет!');
-                    
-                    const toAccount = accountsData.find(a => a.id === toAccountId);
-                    if(account.currency !== toAccount.currency) {
-                        alert("Перевод между разными валютами пока лучше делать через страницу Счета (там есть поддержка курса).");
-                        btn.innerText = 'Добавить операцию'; btn.disabled = false; return;
-                    }
-
-                    // Запись в историю переводов
-                    const { error: txErr } = await supabaseClient.from('transactions').insert([{
-                        type: 'Перевод', amount: amount, currency: account.currency,
-                        category: 'Перевод', description: 'Перевод между счетами',
-                        account_id: accountId, to_account_id: toAccountId,
-                        created_at: createdAt
-                    }]);
-                    if (txErr) throw txErr;
-
-                    // Списание и зачисление
-                    await supabaseClient.from('accounts').update({ balance: Number(account.balance) - amount }).eq('id', accountId);
-                    await supabaseClient.from('accounts').update({ balance: Number(toAccount.balance) + amount }).eq('id', toAccountId);
-                }
-
-                closeTransactionModal();
-                initData(); // Перезагружаем интерфейс
-            } catch (err) {
-                alert('Ошибка: ' + err.message);
-            } finally {
-                btn.innerText = 'Добавить операцию'; btn.disabled = false;
+            subSelect.innerHTML = '';
+            const subs = categoriesData[type]?.[cat] || [];
+            
+            if (subs.length === 0) {
+                subSelect.innerHTML = '<option value="">Нет подкатегорий</option>';
+                subSelect.disabled = true;
+            } else {
+                subSelect.disabled = false;
+                subs.forEach(sub => {
+                    subSelect.innerHTML += `<option value="${sub}">${sub}</option>`;
+                });
             }
         }
 
-        // Запуск
-        initData();
+        function submitOperation(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('op-id').value;
+            const newOp = {
+                id: id ? id : Date.now(), // Генерируем ID для локальной версии
+                type: document.getElementById('op-type').value,
+                date: document.getElementById('op-date').value,
+                amount: parseFloat(document.getElementById('op-amount').value),
+                currency: document.getElementById('op-currency').value,
+                category: document.getElementById('op-category').value,
+                subcategory: document.getElementById('op-subcategory').value,
+                account: document.getElementById('op-account').value,
+                notes: document.getElementById('op-notes').value
+            };
+
+            if (id) {
+                const index = operationsData.findIndex(o => o.id == id);
+                if(index !== -1) operationsData[index] = newOp;
+            } else {
+                operationsData.push(newOp);
+            }
+
+            closeOpModal();
+            renderOperations();
+        }
+
+        // Инициализация при загрузке
+        document.getElementById('op-date').valueAsDate = new Date();
+        updateFormFields();
+        renderOperations();
+
     </script>
 </body>
 </html>
