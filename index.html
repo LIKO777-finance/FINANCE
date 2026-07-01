@@ -266,6 +266,7 @@
         </div>
     </div>
 
+    <!-- Добавлен novalidate, чтобы отключить стандартные всплывашки браузера -->
     <div id="transfer-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 transition-opacity p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform" id="transfer-modal-content">
             <div class="flex justify-between items-center mb-6">
@@ -275,7 +276,7 @@
                 </button>
             </div>
             
-            <form onsubmit="submitTransfer(event)" class="space-y-4">
+            <form onsubmit="submitTransfer(event)" novalidate class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Откуда списать</label>
                     <select id="transfer-from" required onchange="updateTransferLabels()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
@@ -330,7 +331,7 @@
         let accountsData = [];
         let currentTab = 'Все счета';
         let openMenuId = null;
-        let editingAccountId = null; // ID редактируемого счета (null, если создаем новый)
+        let editingAccountId = null;
 
         const formatMoney = (amount, currency = '₽') => {
             return Number(amount).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ' + currency;
@@ -355,9 +356,6 @@
             }
         }
 
-        /* -------------------------------------------
-           МОДАЛЬНЫЕ ОКНА И ОПЕРАЦИИ
-        ------------------------------------------- */
         const modal = document.getElementById('add-modal');
         const modalContent = document.getElementById('add-modal-content');
 
@@ -454,6 +452,9 @@
             const rateHint = document.getElementById('transfer-rate-hint');
             const rateInput = document.getElementById('transfer-rate');
 
+            // Принудительно выставляем микрошаг при любом обновлении меток
+            rateInput.setAttribute('step', '0.000000001');
+
             if (!fromId) { amountBadge.innerText = '?'; feeBadge.innerText = '?'; rateHint.innerText = ''; return; }
 
             const fromCurr = accountsData.find(a => a.id === fromId).currency;
@@ -484,11 +485,14 @@
             e.preventDefault();
             const fromId = document.getElementById('transfer-from').value;
             const toId = document.getElementById('transfer-to').value;
+            
+            if (!fromId || !toId) { alert('Выберите оба счета!'); return; }
             if (fromId === toId) { alert('Нельзя перевести на тот же самый счет!'); return; }
 
             const amount = parseFloat(document.getElementById('transfer-amount').value) || 0;
             const rate = parseFloat(document.getElementById('transfer-rate').value) || 1;
             const fee = parseFloat(document.getElementById('transfer-fee').value) || 0;
+            
             if (amount <= 0) { alert('Сумма должна быть больше нуля'); return; }
 
             const fromAcc = accountsData.find(a => a.id === fromId);
@@ -504,15 +508,12 @@
 
             const btn = document.getElementById('transfer-submit-btn'); btn.innerText = 'Обработка...'; btn.disabled = true;
 
-            // 1. Списание со счета-отправителя (с учетом комиссии)
             const { error: err1 } = await supabaseClient.from('accounts').update({ balance: Number(fromAcc.balance) - amount - fee }).eq('id', fromId);
             if (err1) { alert('Ошибка: ' + err1.message); btn.innerText = 'Выполнить перевод'; btn.disabled = false; return; }
 
-            // 2. Зачисление на счет-получатель
             const { error: err2 } = await supabaseClient.from('accounts').update({ balance: Number(toAcc.balance) + addedAmount }).eq('id', toId);
             if (err2) { alert('Ошибка зачисления: ' + err2.message); btn.innerText = 'Выполнить перевод'; btn.disabled = false; return; }
 
-            // 3. Создание записей логов операций с указанием комиссии и курса для operations.html
             await supabaseClient.from('transactions').insert([
                 {
                     account_id: fromId,
@@ -539,9 +540,6 @@
             fetchAccounts();
         }
 
-        /* -------------------------------------------
-           ОТОБРАЖЕНИЕ И ФИЛЬТРАЦИЯ
-        ------------------------------------------- */
         function setTab(tabName) {
             currentTab = tabName;
             document.querySelectorAll('.tab-btn').forEach(btn => {
