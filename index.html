@@ -397,14 +397,12 @@
 
             let error;
             if (isEditing) {
-                // Логика обновления существующего счета
                 const { error: err } = await supabaseClient
                     .from('accounts')
                     .update({ name: name, type: type, balance: balance, currency: currency })
                     .eq('id', editingAccountId);
                 error = err;
             } else {
-                // Логика создания нового счета
                 const { error: err } = await supabaseClient
                     .from('accounts')
                     .insert([{ name: name, type: type, balance: balance, currency: currency, bank_name: 'Финансы' }]);
@@ -506,13 +504,39 @@
 
             const btn = document.getElementById('transfer-submit-btn'); btn.innerText = 'Обработка...'; btn.disabled = true;
 
+            // 1. Списание со счета-отправителя (с учетом комиссии)
             const { error: err1 } = await supabaseClient.from('accounts').update({ balance: Number(fromAcc.balance) - amount - fee }).eq('id', fromId);
             if (err1) { alert('Ошибка: ' + err1.message); btn.innerText = 'Выполнить перевод'; btn.disabled = false; return; }
 
+            // 2. Зачисление на счет-получатель
             const { error: err2 } = await supabaseClient.from('accounts').update({ balance: Number(toAcc.balance) + addedAmount }).eq('id', toId);
+            if (err2) { alert('Ошибка зачисления: ' + err2.message); btn.innerText = 'Выполнить перевод'; btn.disabled = false; return; }
+
+            // 3. Создание записей логов операций с указанием комиссии и курса для operations.html
+            await supabaseClient.from('transactions').insert([
+                {
+                    account_id: fromId,
+                    type: 'Расход',
+                    category: 'Перевод',
+                    amount: amount,
+                    fee: fee,
+                    exchange_rate: rate,
+                    description: `Перевод на счёт "${toAcc.name}" (Курс: ${rate}, Комиссия: ${fee} ${fromCurr})`
+                },
+                {
+                    account_id: toId,
+                    type: 'Доход',
+                    category: 'Перевод',
+                    amount: addedAmount,
+                    fee: 0,
+                    exchange_rate: rate,
+                    description: `Перевод со счёта "${fromAcc.name}" (Курс: ${rate})`
+                }
+            ]);
+
             btn.innerText = 'Выполнить перевод'; btn.disabled = false;
-            
-            if (err2) alert('Ошибка зачисления: ' + err2.message); else { closeTransferModal(); fetchAccounts(); }
+            closeTransferModal(); 
+            fetchAccounts();
         }
 
         /* -------------------------------------------
@@ -541,11 +565,9 @@
             const keys = Object.keys(totalsObj).filter(k => totalsObj[k] !== 0);
             if (keys.length === 0) return `<div class="text-lg font-bold text-gray-900">0 Br</div>`;
 
-            // Сортировка: Br и ₽ всегда в приоритете
             const priority = ['Br', '₽', '$', '€'];
             keys.sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
 
-            // Цвета бейджей для соответствия общему дизайну
             const currBadgeColors = {
                 'Br': 'bg-emerald-100 text-emerald-700',
                 '₽': 'bg-blue-100 text-blue-700',
@@ -554,7 +576,6 @@
             };
 
             const items = keys.map((k) => {
-                // Обе главные валюты делаем крупными и добавляем цветной бейдж
                 if (k === 'Br' || k === '₽') {
                     const badgeClass = currBadgeColors[k];
                     return `
@@ -563,11 +584,9 @@
                         <span class="px-1.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider shrink-0 ${badgeClass}">${k}</span>
                     </div>`;
                 }
-                // Доллары и евро выводим компактнее
                 return `<div class="text-sm font-medium text-gray-500 mt-1">${formatMoney(totalsObj[k], k)}</div>`;
             });
 
-            // Группируем элементы с аккуратным отступом
             return `<div class="flex flex-col space-y-2 mt-1">${items.join('')}</div>`;
         }
 
@@ -604,7 +623,6 @@
             document.getElementById('acc-balance').value = acc.balance;
             document.getElementById('acc-currency').value = acc.currency;
 
-            // Открываем модальное окно
             modal.classList.remove('hidden'); modal.classList.add('flex');
             setTimeout(() => { modalContent.classList.remove('scale-95'); modalContent.classList.add('scale-100'); }, 10);
 
@@ -614,7 +632,6 @@
         async function deleteAccount(id) {
             if(confirm('Вы уверены, что хотите удалить этот счет? Операцию нельзя отменить.')) {
                 try {
-                    // Сначала удаляем все операции, привязанные к этому счету
                     const { error: txError } = await supabaseClient
                         .from('transactions')
                         .delete()
@@ -622,7 +639,6 @@
 
                     if (txError) throw txError;
 
-                    // Теперь спокойно удаляем сам счет
                     const { error: accError } = await supabaseClient
                         .from('accounts')
                         .delete()
@@ -654,11 +670,11 @@
 
             return `
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition relative gap-4">
-                <div class="flex items-center gap-4 w-[50%] overflow-hidden">
+                <div class="flex items-center gap-4 min-w-0 flex-1">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white text-2xl shrink-0 ${bgClass}">
                         <i class="ph ${iconName}"></i>
                     </div>
-                    <div class="min-w-0">
+                    <div class="min-w-0 flex-1">
                         <h3 class="font-semibold text-gray-900 truncate">${acc.name}</h3>
                         <div class="flex items-center gap-2 mt-1">
                             <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 ${badgeClass}">${acc.currency}</span>
@@ -666,11 +682,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="w-[40%] text-right pr-4 truncate">
+                <div class="text-right shrink-0 pl-2">
                     <p class="text-[11px] uppercase tracking-wider text-gray-400 mb-0.5">Доступно</p>
-                    <p class="font-semibold text-gray-900 text-lg truncate">${formatMoney(acc.balance, acc.currency)}</p>
+                    <p class="font-semibold text-gray-900 text-lg whitespace-nowrap">${formatMoney(acc.balance, acc.currency)}</p>
                 </div>
-                <div class="w-[10%] flex justify-end relative menu-container">
+                <div class="flex justify-end relative menu-container shrink-0">
                     <button onclick="toggleMenu('${acc.id}')" class="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition">
                         <i class="ph ph-dots-three-vertical text-xl"></i>
                     </button>
