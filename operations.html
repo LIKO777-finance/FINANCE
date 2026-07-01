@@ -96,7 +96,7 @@
                             <span class="text-sm font-medium text-gray-600">BYN (Бел. рубль)</span>
                         </div>
                         <div class="text-xl font-bold text-emerald-500 mb-1" id="stat-inc-byn">+0 Br</div>
-                        <div class="text-xs text-gray-400">доходы за месяц</div>
+                        <div class="text-xs text-gray-400">доходы за период</div>
                         <i class="ph ph-trend-up absolute right-4 bottom-4 text-4xl text-emerald-50 opacity-50"></i>
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
@@ -105,7 +105,7 @@
                             <span class="text-sm font-medium text-gray-600">RUB (Рос. рубль)</span>
                         </div>
                         <div class="text-xl font-bold text-blue-500 mb-1" id="stat-inc-rub">+0 ₽</div>
-                        <div class="text-xs text-gray-400">доходы за месяц</div>
+                        <div class="text-xs text-gray-400">доходы за период</div>
                         <i class="ph ph-trend-up absolute right-4 bottom-4 text-4xl text-blue-50 opacity-50"></i>
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
@@ -117,7 +117,7 @@
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
                         <div class="text-sm font-medium text-gray-600 mb-2">Всего расходов (BYN)</div>
                         <div class="text-xl font-bold text-red-500 mb-1" id="stat-exp-total">-0 Br</div>
-                        <div class="text-xs text-gray-400">за этот месяц</div>
+                        <div class="text-xs text-gray-400">за выбранный период</div>
                         <i class="ph ph-trend-down absolute right-4 bottom-4 text-4xl text-red-50 opacity-50"></i>
                     </div>
                 </div>
@@ -131,15 +131,18 @@
                         <button onclick="setTab('Инвестиция')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-2 -mb-2" data-tab="Инвестиция">Инвестиции</button>
                     </div>
                     
-                    <div class="flex items-center space-x-3 w-full sm:w-auto">
-                        <select id="currency-filter" onchange="renderTransactions()" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-brand transition">
+                    <div class="flex items-center space-x-3 w-full sm:w-auto flex-wrap gap-2 sm:gap-0">
+                        <select id="month-filter" onchange="renderTransactions(); calculateStats();" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-brand transition cursor-pointer font-medium text-gray-700">
+                            </select>
+                        
+                        <select id="currency-filter" onchange="renderTransactions()" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-brand transition cursor-pointer">
                             <option value="All">Все валюты</option>
                             <option value="Br">Только Br (BYN)</option>
                             <option value="₽">Только ₽ (RUB)</option>
                             <option value="$">Только $ (USD)</option>
                             <option value="€">Только € (EUR)</option>
                         </select>
-                        <div class="relative w-full sm:w-64">
+                        <div class="relative w-full sm:w-48">
                             <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                             <input type="text" id="search-input" onkeyup="renderTransactions()" placeholder="Поиск..." class="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand transition">
                         </div>
@@ -155,8 +158,8 @@
             <aside class="w-full xl:w-80 shrink-0 space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-gray-900">Сводка за месяц</h3>
-                        <span class="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-lg">Текущий</span>
+                        <h3 class="font-bold text-gray-900">Сводка за период</h3>
+                        <span class="text-xs font-medium px-2 py-1 bg-gray-100 text-gray-600 rounded-lg" id="sidebar-period-badge">Выбранный</span>
                     </div>
                     <div class="space-y-6">
                         <div class="flex items-center justify-between">
@@ -186,7 +189,7 @@
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h3 class="font-bold text-gray-900 mb-4 text-sm uppercase tracking-wider">Топ-3 крупных расходов</h3>
                     <div id="top-operations-container" class="space-y-3">
-                        <p class="text-sm text-gray-400">Нет данных за месяц</p>
+                        <p class="text-sm text-gray-400">Нет данных за период</p>
                     </div>
                 </div>
 
@@ -319,10 +322,51 @@
                 if (transErr) throw transErr;
                 transactionsData = trans || [];
 
+                // Сначала собираем список месяцев из базы, затем рендерим страницы
+                initMonthFilter();
                 renderTransactions();
                 calculateStats();
             } catch (error) {
                 console.error("Ошибка загрузки:", error);
+            }
+        }
+
+        /* --- ДИНАМИЧЕСКИЙ ФИЛЬТР МЕСЯЦЕВ --- */
+        function initMonthFilter() {
+            const filter = document.getElementById('month-filter');
+            if (!filter) return;
+            
+            const periods = new Set();
+            
+            // Всегда добавляем в список текущий месяц
+            const now = new Date();
+            const currentPeriod = now.toISOString().substring(0, 7); // формат "YYYY-MM"
+            periods.add(currentPeriod);
+            
+            // Вытаскиваем уникальные периоды из всех транзакций в базе
+            transactionsData.forEach(t => {
+                if (t.created_at) {
+                    periods.add(t.created_at.substring(0, 7));
+                }
+            });
+            
+            const sortedPeriods = Array.from(periods).sort().reverse();
+            const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+            
+            let html = '';
+            sortedPeriods.forEach(p => {
+                const [year, month] = p.split('-');
+                const monthName = monthNames[parseInt(month) - 1];
+                html += `<option value="${p}">${monthName} ${year}</option>`;
+            });
+            
+            html += `<option value="All">Все время</option>`;
+            
+            filter.innerHTML = html;
+            
+            // Если мы только зашли на сайт, ставим по умолчанию текущий месяц
+            if(!filter.value) {
+                filter.value = currentPeriod;
             }
         }
 
@@ -357,6 +401,7 @@
             const container = document.getElementById('transactions-container');
             const searchQuery = document.getElementById('search-input').value.toLowerCase();
             const currencyFilter = document.getElementById('currency-filter').value;
+            const periodFilter = document.getElementById('month-filter').value;
             container.innerHTML = '';
 
             let filtered = transactionsData.filter(t => {
@@ -365,11 +410,12 @@
                                     (t.category || '').toLowerCase().includes(searchQuery) ||
                                     (t.subcategory || '').toLowerCase().includes(searchQuery);
                 const matchCurrency = currencyFilter === 'All' || t.currency === currencyFilter;
-                return matchTab && matchSearch && matchCurrency;
+                const matchPeriod = periodFilter === 'All' || (t.created_at && t.created_at.startsWith(periodFilter));
+                return matchTab && matchSearch && matchCurrency && matchPeriod;
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-gray-400 bg-white rounded-2xl border border-gray-200 border-dashed">Операций пока нет.</div>`;
+                container.innerHTML = `<div class="p-8 text-center text-gray-400 bg-white rounded-2xl border border-gray-200 border-dashed">Операций в этом периоде пока нет.</div>`;
                 return;
             }
 
@@ -464,16 +510,18 @@
             }
         });
 
-        // Статистика (Правая панель и Верхние карточки)
+        // Статистика с учетом фильтрации месяцев
         function calculateStats() {
             let incByn = 0, incRub = 0, expByn = 0, expRub = 0;
-            const currentMonth = new Date().getMonth();
+            const periodFilter = document.getElementById('month-filter').value;
+            
             let monthExpenses = [];
             let catCounts = { exp: {}, inc: {} };
 
             transactionsData.forEach(t => {
-                const d = new Date(t.created_at);
-                if (d.getMonth() === currentMonth) {
+                const matchPeriod = periodFilter === 'All' || (t.created_at && t.created_at.startsWith(periodFilter));
+                
+                if (matchPeriod) {
                     if (t.type === 'Доход') {
                         if (t.currency === 'Br') incByn += Number(t.amount);
                         if (t.currency === '₽') incRub += Number(t.amount);
@@ -487,18 +535,21 @@
                 }
             });
 
-            // Карточки сверху
+            // Обновляем текст в бейдже сбоку
+            document.getElementById('sidebar-period-badge').innerText = periodFilter === 'All' ? 'Все время' : periodFilter;
+
+            // Карточки сверху (выводим корректно собранные суммы)
             document.getElementById('stat-inc-byn').innerText = `+${formatMoney(incByn, 'Br')}`;
             document.getElementById('stat-inc-rub').innerText = `+${formatMoney(incRub, '₽')}`;
-            document.getElementById('stat-exp-total').innerText = `-${formatMoney(expByn, 'Br')}`; // Выводим BYN для примера
+            document.getElementById('stat-exp-total').innerText = `-${formatMoney(expByn, 'Br')} / -${formatMoney(expRub, '₽')}`;
 
-            // Сводка
+            // Сводка боковой панели
             document.getElementById('sidebar-inc-byn').innerText = formatMoney(incByn, 'Br');
             document.getElementById('sidebar-inc-rub').innerText = formatMoney(incRub, '₽');
             document.getElementById('sidebar-exp-byn').innerText = formatMoney(expByn, 'Br');
             document.getElementById('sidebar-exp-rub').innerText = formatMoney(expRub, '₽');
 
-            // Топ 3 расходов за месяц
+            // Топ 3 расходов за выбранный период
             monthExpenses.sort((a, b) => b.amount - a.amount);
             const topOpsContainer = document.getElementById('top-operations-container');
             if(monthExpenses.length > 0) {
@@ -511,21 +562,27 @@
                         <span class="text-sm font-bold text-gray-900 ml-2">-${formatMoney(op.amount, op.currency)}</span>
                     </div>
                 `).join('');
+            } else {
+                topOpsContainer.innerHTML = `<p class="text-sm text-gray-400">Нет трат за период</p>`;
             }
 
-            // Топ категории
-            const topExp = Object.keys(catCounts.exp).sort((a,b) => catCounts.exp[b] - catCounts.exp[a])[0] || 'Нет данных';
-            const topInc = Object.keys(catCounts.inc).sort((a,b) => catCounts.inc[b] - catCounts.inc[a])[0] || 'Нет данных';
+            // Топ категории за выбранный период
+            const topExp = Object.keys(catCounts.exp).sort((a,b) => catCounts.exp[b] - catCounts.exp[a])[0] || 'Нет трат';
+            const topInc = Object.keys(catCounts.inc).sort((a,b) => catCounts.inc[b] - catCounts.inc[a])[0] || 'Нет доходов';
             document.getElementById('top-expense-cat').innerText = topExp;
             document.getElementById('top-income-cat').innerText = topInc;
         }
 
-        /* --- ЭКСПОРТ В CSV --- */
+        /* --- ЭКСПОРТ В CSV С УЧЕТОМ МЕСЯЦА --- */
         function exportToCSV() {
+            const periodFilter = document.getElementById('month-filter').value;
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
             csvContent += "Дата,Время,Тип,Категория,Подкатегория,Сумма,Валюта,Примечание\n";
             
             transactionsData.forEach(t => {
+                const matchPeriod = periodFilter === 'All' || (t.created_at && t.created_at.startsWith(periodFilter));
+                if (!matchPeriod) return; // Пропускаем записи не из выбранного месяца
+
                 const date = new Date(t.created_at).toLocaleDateString('ru-RU');
                 const time = new Date(t.created_at).toLocaleTimeString('ru-RU');
                 let row = [
@@ -538,7 +595,7 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `operations_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute("download", `operations_${periodFilter === 'All' ? 'all-time' : periodFilter}.csv`);
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
@@ -556,7 +613,6 @@
             document.getElementById('op-account-id').innerHTML = optionsHtml;
             document.getElementById('op-to-account-id').innerHTML = optionsHtml;
 
-            // Если это создание новой, а не редактирование:
             if(!document.getElementById('op-id').value) {
                 document.getElementById('modal-title').innerText = 'Новая операция';
                 document.getElementById('submit-btn').innerText = 'Добавить операцию';
@@ -597,7 +653,6 @@
                 document.getElementById('field-category-date').classList.remove('hidden');
                 document.getElementById('label-acc-from').innerText = type === 'Доход' ? 'Счет зачисления' : 'Счет списания';
                 
-                // Обновляем категории
                 const catSelect = document.getElementById('op-category');
                 catSelect.innerHTML = '';
                 Object.keys(categoriesData[type] || {}).forEach(cat => {
@@ -624,13 +679,12 @@
             }
         }
 
-        /* --- РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ В SUPABASE --- */
         async function updateBalance(accountId, diffAmount) {
             const acc = accountsData.find(a => a.id === accountId);
             if(acc) {
                 const newBal = Number(acc.balance) + diffAmount;
                 await supabaseClient.from('accounts').update({ balance: newBal }).eq('id', accountId);
-                acc.balance = newBal; // обновляем локально
+                acc.balance = newBal;
             }
         }
 
@@ -649,9 +703,7 @@
                 const t = transactionsData.find(x => x.id === id);
                 if(!t) return;
 
-                // 1. Возвращаем баланс
                 await revertTransactionBalance(t);
-                // 2. Удаляем запись
                 await supabaseClient.from('transactions').delete().eq('id', id);
                 initData();
             } catch(e) {
@@ -706,7 +758,6 @@
             }
 
             try {
-                // Если редактируем - сначала откатываем старый баланс
                 if(editId) {
                     const oldTx = transactionsData.find(x => x.id === editId);
                     if(oldTx) await revertTransactionBalance(oldTx);
@@ -722,7 +773,6 @@
                     payload.category = document.getElementById('op-category').value;
                     payload.subcategory = document.getElementById('op-subcategory').value;
                     
-                    // Применяем новый баланс
                     const diff = type === 'Доход' ? amount : -amount;
                     await updateBalance(accountId, diff);
 
@@ -733,7 +783,6 @@
                     payload.category = 'Перевод';
                     payload.to_account_id = toAccountId;
                     
-                    // Списание и зачисление
                     await updateBalance(accountId, -amount);
                     await updateBalance(toAccountId, amount);
                 }
