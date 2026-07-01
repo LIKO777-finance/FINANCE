@@ -71,7 +71,7 @@
         <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Операции</h1>
-                <p class="text-sm text-gray-500 mt-1">Все ваши финансовые операции в одном месте</p>
+                <p class="text-sm text-gray-500 mt-1">Все ваши financial операции в одном месте</p>
             </div>
             <div class="flex items-center space-x-4">
                 <button onclick="exportToCSV()" class="flex items-center space-x-2 border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition text-gray-700">
@@ -133,7 +133,7 @@
                     
                     <div class="flex items-center space-x-3 w-full sm:w-auto flex-wrap gap-2 sm:gap-0">
                         <select id="month-filter" onchange="renderTransactions(); calculateStats();" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-brand transition cursor-pointer font-medium text-gray-700">
-                            </select>
+                        </select>
                         
                         <select id="currency-filter" onchange="renderTransactions()" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-brand transition cursor-pointer">
                             <option value="All">Все валюты</option>
@@ -244,16 +244,27 @@
                     <select id="op-to-account-id" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
                 </div>
 
+                <div id="field-transfer-details" class="grid grid-cols-2 gap-4 hidden">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Комиссия банка</label>
+                        <input type="number" id="op-commission" placeholder="0.00" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Курс конвертации</label>
+                        <input type="number" id="op-exchange-rate" placeholder="1.0000" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-4" id="field-category-date">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
                         <select id="op-category" onchange="updateSubcategories()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
-                            </select>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Подкатегория</label>
                         <select id="op-subcategory" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
-                            </select>
+                        </select>
                     </div>
                 </div>
 
@@ -453,9 +464,19 @@
                             else if (t.type === 'Расход') amountHtml = `<span class="font-semibold text-gray-900 whitespace-nowrap">-${formatMoney(t.amount, t.currency)}</span>`;
                             else if (t.type === 'Инвестиция') amountHtml = `<span class="font-semibold text-indigo-600 whitespace-nowrap">${formatMoney(t.amount, t.currency)}</span>`;
                             else if (t.type === 'Перевод') {
-                                const toName = accountsData.find(a => a.id === t.to_account_id)?.name || '?';
+                                const toAcc = accountsData.find(a => a.id === t.to_account_id);
+                                const toName = toAcc ? toAcc.name : 'Удаленный счет';
                                 titleHtml = `Перевод средств`;
-                                amountHtml = `<span class="font-semibold text-gray-900 whitespace-nowrap">${formatMoney(t.amount, t.currency)}</span>`;
+                                
+                                // Вывод суб-информации о комиссии и курсе в названии операции
+                                let details = [];
+                                if (t.commission && Number(t.commission) > 0) details.push(`ком. ${formatMoney(t.commission, t.currency)}`);
+                                if (t.exchange_rate && Number(t.exchange_rate) !== 1) details.push(`курс: ${t.exchange_rate}`);
+                                if (details.length > 0) {
+                                    titleHtml += ` <span class="text-xs text-gray-400 font-normal">(${details.join(', ')})</span>`;
+                                }
+
+                                amountHtml = `<span class="font-semibold text-purple-600 whitespace-nowrap">${formatMoney(t.amount, t.currency)}</span>`;
                             }
 
                             return `
@@ -468,7 +489,7 @@
                                         <p class="font-semibold text-gray-900 truncate text-sm sm:text-base">${titleHtml}</p>
                                         <p class="text-xs text-gray-500 truncate mt-0.5">
                                             ${time} • 
-                                            ${t.type === 'Перевод' ? `${accName} &rarr; ${accountsData.find(a => a.id === t.to_account_id)?.name}` : accName}
+                                            ${t.type === 'Перевод' ? `${accName} &rarr; ${accountsData.find(a => a.id === t.to_account_id)?.name || '?'}` : accName}
                                             ${t.description ? ` • <i>${t.description}</i>` : ''}
                                         </p>
                                     </div>
@@ -577,17 +598,17 @@
         function exportToCSV() {
             const periodFilter = document.getElementById('month-filter').value;
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
-            csvContent += "Дата,Время,Тип,Категория,Подкатегория,Сумма,Валюта,Примечание\n";
+            csvContent += "Дата,Время,Тип,Категория,Подкатегория,Сумма,Валюта,Комиссия,Курс,Примечание\n";
             
             transactionsData.forEach(t => {
                 const matchPeriod = periodFilter === 'All' || (t.created_at && t.created_at.startsWith(periodFilter));
-                if (!matchPeriod) return; // Пропускаем записи не из выбранного месяца
+                if (!matchPeriod) return; 
 
                 const date = new Date(t.created_at).toLocaleDateString('ru-RU');
                 const time = new Date(t.created_at).toLocaleTimeString('ru-RU');
                 let row = [
                     date, time, t.type, t.category, t.subcategory || '', 
-                    t.amount, t.currency, t.description || ''
+                    t.amount, t.currency, t.commission || 0, t.exchange_rate || 1, t.description || ''
                 ].map(v => `"${v}"`).join(",");
                 csvContent += row + "\n";
             });
@@ -617,6 +638,8 @@
                 document.getElementById('modal-title').innerText = 'Новая операция';
                 document.getElementById('submit-btn').innerText = 'Добавить операцию';
                 document.getElementById('op-date').valueAsDate = new Date();
+                document.getElementById('op-commission').value = '0.00';
+                document.getElementById('op-exchange-rate').value = '1.0000';
                 setOpType('Расход');
             }
 
@@ -631,6 +654,8 @@
                 document.getElementById('op-id').value = '';
                 document.getElementById('op-amount').value = '';
                 document.getElementById('op-description').value = '';
+                document.getElementById('op-commission').value = '0.00';
+                document.getElementById('op-exchange-rate').value = '1.0000';
             }, 150);
         }
 
@@ -646,10 +671,12 @@
 
             if (type === 'Перевод') {
                 document.getElementById('field-account-to').classList.remove('hidden');
+                document.getElementById('field-transfer-details').classList.remove('hidden'); // Показываем комиссию и курс
                 document.getElementById('field-category-date').classList.add('hidden');
                 document.getElementById('label-acc-from').innerText = 'Счет списания';
             } else {
                 document.getElementById('field-account-to').classList.add('hidden');
+                document.getElementById('field-transfer-details').classList.add('hidden'); // Прячем комиссию и курс
                 document.getElementById('field-category-date').classList.remove('hidden');
                 document.getElementById('label-acc-from').innerText = type === 'Доход' ? 'Счет зачисления' : 'Счет списания';
                 
@@ -692,8 +719,12 @@
             if(t.type === 'Доход') await updateBalance(t.account_id, -t.amount);
             else if(t.type === 'Расход' || t.type === 'Инвестиция') await updateBalance(t.account_id, t.amount);
             else if(t.type === 'Перевод') {
-                await updateBalance(t.account_id, t.amount);
-                await updateBalance(t.to_account_id, -t.amount);
+                const commission = Number(t.commission || 0);
+                const rate = Number(t.exchange_rate || 1);
+                // Возвращаем сумму + комиссию на счет списания
+                await updateBalance(t.account_id, t.amount + commission);
+                // Списываем со счета зачисления сконвертированную сумму
+                await updateBalance(t.to_account_id, -(t.amount * rate));
             }
         }
 
@@ -727,6 +758,8 @@
             
             if(t.type === 'Перевод') {
                 document.getElementById('op-to-account-id').value = t.to_account_id;
+                document.getElementById('op-commission').value = t.commission || '0.00';
+                document.getElementById('op-exchange-rate').value = t.exchange_rate || '1.0000';
             } else {
                 document.getElementById('op-category').value = t.category;
                 updateSubcategories();
@@ -747,6 +780,9 @@
             const accountId = document.getElementById('op-account-id').value;
             const dateInput = document.getElementById('op-date').value;
             
+            const commission = type === 'Перевод' ? parseFloat(document.getElementById('op-commission').value) || 0 : 0;
+            const exchangeRate = type === 'Перевод' ? parseFloat(document.getElementById('op-exchange-rate').value) || 1 : 1;
+
             const dateObj = new Date(dateInput);
             dateObj.setHours(new Date().getHours());
             const createdAt = dateObj.toISOString();
@@ -766,7 +802,9 @@
                 let payload = {
                     type: type, amount: amount, currency: account.currency,
                     account_id: accountId, created_at: createdAt,
-                    description: document.getElementById('op-description').value
+                    description: document.getElementById('op-description').value,
+                    commission: commission,
+                    exchange_rate: exchangeRate
                 };
 
                 if (type === 'Расход' || type === 'Доход' || type === 'Инвестиция') {
@@ -783,8 +821,10 @@
                     payload.category = 'Перевод';
                     payload.to_account_id = toAccountId;
                     
-                    await updateBalance(accountId, -amount);
-                    await updateBalance(toAccountId, amount);
+                    // Списание с аккаунта отправления: Сумма перевода + Комиссия
+                    await updateBalance(accountId, -(amount + commission));
+                    // Зачисление на целевой аккаунт: Сумма перевода * Курс конвертации
+                    await updateBalance(toAccountId, (amount * exchangeRate));
                 }
 
                 if(editId) {
