@@ -221,7 +221,7 @@
     <div id="add-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 transition-opacity p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform" id="add-modal-content">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-900">Новый счёт</h3>
+                <h3 id="modal-title" class="text-xl font-bold text-gray-900">Новый счёт</h3>
                 <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 transition">
                     <i class="ph ph-x text-2xl"></i>
                 </button>
@@ -330,6 +330,7 @@
         let accountsData = [];
         let currentTab = 'Все счета';
         let openMenuId = null;
+        let editingAccountId = null; // ID редактируемого счета (null, если создаем новый)
 
         const formatMoney = (amount, currency = '₽') => {
             return Number(amount).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ' + currency;
@@ -361,6 +362,13 @@
         const modalContent = document.getElementById('add-modal-content');
 
         function openModal() {
+            editingAccountId = null;
+            document.getElementById('modal-title').innerText = 'Новый счёт';
+            document.getElementById('submit-btn').innerText = 'Создать счёт';
+            
+            document.getElementById('acc-name').value = ''; 
+            document.getElementById('acc-balance').value = '';
+
             modal.classList.remove('hidden'); modal.classList.add('flex');
             setTimeout(() => { modalContent.classList.remove('scale-95'); modalContent.classList.add('scale-100'); }, 10);
         }
@@ -368,23 +376,50 @@
             modalContent.classList.remove('scale-100'); modalContent.classList.add('scale-95');
             setTimeout(() => {
                 modal.classList.add('hidden'); modal.classList.remove('flex');
-                document.getElementById('acc-name').value = ''; document.getElementById('acc-balance').value = '';
+                document.getElementById('acc-name').value = ''; 
+                document.getElementById('acc-balance').value = '';
+                editingAccountId = null;
             }, 150);
         }
 
         async function submitAccount(e) {
             e.preventDefault();
-            const btn = document.getElementById('submit-btn'); btn.innerText = 'Сохранение...'; btn.disabled = true;
+            const btn = document.getElementById('submit-btn'); 
+            const isEditing = editingAccountId !== null;
+            
+            btn.innerText = isEditing ? 'Сохранение...' : 'Создание...'; 
+            btn.disabled = true;
+            
             const name = document.getElementById('acc-name').value;
             const type = document.getElementById('acc-type').value;
             const balance = parseFloat(document.getElementById('acc-balance').value) || 0;
             const currency = document.getElementById('acc-currency').value;
 
-            const { error } = await supabaseClient.from('accounts').insert([
-                { name: name, type: type, balance: balance, currency: currency, bank_name: 'Финансы' }
-            ]);
-            btn.innerText = 'Создать счёт'; btn.disabled = false;
-            if (error) alert('Ошибка: ' + error.message); else { closeModal(); fetchAccounts(); }
+            let error;
+            if (isEditing) {
+                // Логика обновления существующего счета
+                const { error: err } = await supabaseClient
+                    .from('accounts')
+                    .update({ name: name, type: type, balance: balance, currency: currency })
+                    .eq('id', editingAccountId);
+                error = err;
+            } else {
+                // Логика создания нового счета
+                const { error: err } = await supabaseClient
+                    .from('accounts')
+                    .insert([{ name: name, type: type, balance: balance, currency: currency, bank_name: 'Финансы' }]);
+                error = err;
+            }
+
+            btn.innerText = isEditing ? 'Сохранить изменения' : 'Создать счёт'; 
+            btn.disabled = false;
+            
+            if (error) {
+                alert('Ошибка: ' + error.message);
+            } else { 
+                closeModal(); 
+                fetchAccounts(); 
+            }
         }
 
         const transferModal = document.getElementById('transfer-modal');
@@ -515,9 +550,7 @@
             }).join('');
         }
 
-        // Логика выпадающего меню с поддержкой UUID
         function toggleMenu(id) {
-            // Закрываем все остальные открытые меню
             const allMenus = document.querySelectorAll('[id^="menu-"]');
             allMenus.forEach(menu => {
                 if(menu.id !== `menu-${id}`) menu.classList.add('hidden');
@@ -538,16 +571,38 @@
         });
 
         function editAccount(id) {
-            alert(`Тут будет модальное окно редактирования для счета ID: ${id}`);
+            const acc = accountsData.find(a => a.id === id);
+            if (!acc) return;
+
+            editingAccountId = id;
+            document.getElementById('modal-title').innerText = 'Редактировать счёт';
+            document.getElementById('submit-btn').innerText = 'Сохранить изменения';
+
+            document.getElementById('acc-name').value = acc.name;
+            document.getElementById('acc-type').value = acc.type;
+            document.getElementById('acc-balance').value = acc.balance;
+            document.getElementById('acc-currency').value = acc.currency;
+
+            // Открываем модальное окно
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            setTimeout(() => { modalContent.classList.remove('scale-95'); modalContent.classList.add('scale-100'); }, 10);
+
             toggleMenu(id);
         }
 
         async function deleteAccount(id) {
             if(confirm('Вы уверены, что хотите удалить этот счет? Операцию нельзя отменить.')) {
-                // В будущем раскомментируй эти строки для реального удаления
-                // await supabaseClient.from('accounts').delete().eq('id', id);
-                // fetchAccounts();
-                alert(`Имитация удаления счета ID: ${id}`);
+                try {
+                    const { error } = await supabaseClient
+                        .from('accounts')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                    fetchAccounts();
+                } catch (error) {
+                    alert('Ошибка при удалении счета: ' + error.message);
+                }
             }
             toggleMenu(id);
         }
