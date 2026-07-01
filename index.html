@@ -27,7 +27,7 @@
         }
         .modal-enter { opacity: 0; transform: scale(0.95); }
         .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.2s ease-out; }
-        .balances-container { max-height: 80px; overflow-y: auto; }
+        .balances-container { max-height: 120px; overflow-y: auto; }
         .balances-container::-webkit-scrollbar { width: 4px; }
         .balances-container::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
     </style>
@@ -539,15 +539,36 @@
 
         function renderBalancesHTML(totalsObj) {
             const keys = Object.keys(totalsObj).filter(k => totalsObj[k] !== 0);
-            if (keys.length === 0) return `<div class="text-2xl font-bold text-gray-900">0 Br</div>`;
+            if (keys.length === 0) return `<div class="text-lg font-bold text-gray-900">0 Br</div>`;
 
+            // Сортировка: Br и ₽ всегда в приоритете
             const priority = ['Br', '₽', '$', '€'];
             keys.sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
 
-            return keys.map((k, i) => {
-                if (i === 0) return `<div class="text-2xl font-bold text-gray-900 leading-tight">${formatMoney(totalsObj[k], k)}</div>`;
+            // Цвета бейджей для соответствия общему дизайну
+            const currBadgeColors = {
+                'Br': 'bg-emerald-100 text-emerald-700',
+                '₽': 'bg-blue-100 text-blue-700',
+                '$': 'bg-green-100 text-green-700',
+                '€': 'bg-yellow-100 text-yellow-700'
+            };
+
+            const items = keys.map((k) => {
+                // Обе главные валюты делаем крупными и добавляем цветной бейдж
+                if (k === 'Br' || k === '₽') {
+                    const badgeClass = currBadgeColors[k];
+                    return `
+                    <div class="flex items-center gap-2">
+                        <div class="text-xl font-bold text-gray-900">${formatMoney(totalsObj[k], '').trim()}</div>
+                        <span class="px-1.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider shrink-0 ${badgeClass}">${k}</span>
+                    </div>`;
+                }
+                // Доллары и евро выводим компактнее
                 return `<div class="text-sm font-medium text-gray-500 mt-1">${formatMoney(totalsObj[k], k)}</div>`;
-            }).join('');
+            });
+
+            // Группируем элементы с аккуратным отступом
+            return `<div class="flex flex-col space-y-2 mt-1">${items.join('')}</div>`;
         }
 
         function toggleMenu(id) {
@@ -593,15 +614,25 @@
         async function deleteAccount(id) {
             if(confirm('Вы уверены, что хотите удалить этот счет? Операцию нельзя отменить.')) {
                 try {
-                    const { error } = await supabaseClient
+                    // Сначала удаляем все операции, привязанные к этому счету
+                    const { error: txError } = await supabaseClient
+                        .from('transactions')
+                        .delete()
+                        .eq('account_id', id);
+
+                    if (txError) throw txError;
+
+                    // Теперь спокойно удаляем сам счет
+                    const { error: accError } = await supabaseClient
                         .from('accounts')
                         .delete()
                         .eq('id', id);
 
-                    if (error) throw error;
+                    if (accError) throw accError;
+                    
                     fetchAccounts();
                 } catch (error) {
-                    alert('Ошибка при удалении счета: ' + error.message);
+                    alert('Ошибка при удалении: ' + error.message);
                 }
             }
             toggleMenu(id);
