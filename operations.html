@@ -71,7 +71,7 @@
         <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Операции</h1>
-                <p class="text-sm text-gray-500 mt-1">Все ваши financial операции в одном месте</p>
+                <p class="text-sm text-gray-500 mt-1">Все ваши финансовые операции в одном месте</p>
             </div>
             <div class="flex items-center space-x-4">
                 <button onclick="exportToCSV()" class="flex items-center space-x-2 border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition text-gray-700">
@@ -226,32 +226,51 @@
                 <button type="button" onclick="setOpType('Инвестиция')" id="btn-type-investment" class="flex-1 py-1.5 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-900 transition flex items-center justify-center gap-1"><i class="ph ph-trend-up"></i> Инвест.</button>
             </div>
 
-            <form onsubmit="submitTransaction(event)" class="space-y-4">
+            <form onsubmit="submitTransaction(event)" novalidate class="space-y-4">
                 <input type="hidden" id="op-id" value=""> <input type="hidden" id="op-type" value="Расход">
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Сумма</label>
-                    <input type="number" id="op-amount" required placeholder="0.00" step="0.01" class="w-full px-4 py-3 text-lg font-semibold border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition">
-                </div>
 
                 <div id="field-account-from">
                     <label class="block text-sm font-medium text-gray-700 mb-1" id="label-acc-from">Счет списания</label>
-                    <select id="op-account-id" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
+                    <select id="op-account-id" required onchange="updateAccountLabels()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
                 </div>
 
                 <div id="field-account-to" class="hidden">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Счет зачисления</label>
-                    <select id="op-to-account-id" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
+                    <select id="op-to-account-id" onchange="updateAccountLabels()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
                 </div>
 
-                <div id="field-transfer-details" class="grid grid-cols-2 gap-4 hidden">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Комиссия банка</label>
-                        <input type="number" id="op-commission" placeholder="0.00" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" id="label-amount">Сумма</label>
+                    <div class="relative">
+                        <input type="number" id="op-amount" required placeholder="0.00" step="0.01" class="w-full px-4 py-3 text-lg font-semibold border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition pr-12">
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                            <span class="text-gray-400 font-bold sm:text-sm" id="source-currency-badge"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="field-transfer-details" class="grid grid-cols-2 gap-4 hidden bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Сумма зачисления</label>
+                        <div class="relative">
+                            <input type="number" id="op-target-amount" placeholder="0.00" step="0.01" class="w-full px-4 py-3 text-lg font-semibold border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-white pr-12 text-emerald-700">
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                <span class="text-gray-400 font-bold sm:text-sm" id="target-currency-badge"></span>
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Курс конвертации</label>
-                        <input type="number" id="op-exchange-rate" placeholder="1.0000" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                        <input type="number" id="op-exchange-rate" placeholder="1.0000" step="0.000000001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Комиссия банка</label>
+                        <div class="relative">
+                            <input type="number" id="op-commission" placeholder="0.00" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white pr-10">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <span class="text-gray-400 font-bold text-xs" id="comm-currency-badge"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -287,7 +306,6 @@
     </div>
 
     <script>
-        // Твои доступы к Supabase
         const supabaseUrl = 'https://ujjuoyfykkmgcaeujami.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqanVveWZ5a2ttZ2NhZXVqYW1pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3Nzg1MDYsImV4cCI6MjA5ODM1NDUwNn0.Rf9cDJQrsr8mTfaNBgpUabwU3oq81Wcvr8xcyYIoKFg';
         const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -297,7 +315,6 @@
         let currentTab = 'Все';
         let openMenuId = null;
 
-        // Структура категорий
         const categoriesData = {
             'Расход': {
                 'Основное': ['квартира', 'коммуналка', 'интернет', 'телефоны', 'налоги бел', 'налоги рос', 'налоги 13%', 'подписки'],
@@ -333,12 +350,56 @@
                 if (transErr) throw transErr;
                 transactionsData = trans || [];
 
-                // Сначала собираем список месяцев из базы, затем рендерим страницы
                 initMonthFilter();
                 renderTransactions();
                 calculateStats();
+                setupAutoCalculator(); // Подключаем калькулятор курсов
             } catch (error) {
                 console.error("Ошибка загрузки:", error);
+            }
+        }
+
+        /* --- ЛОГИКА УМНОГО КАЛЬКУЛЯТОРА --- */
+        function setupAutoCalculator() {
+            const amtIn = document.getElementById('op-amount');
+            const rateIn = document.getElementById('op-exchange-rate');
+            const targetIn = document.getElementById('op-target-amount');
+
+            amtIn.addEventListener('input', () => {
+                if (document.getElementById('op-type').value !== 'Перевод') return;
+                const a = parseFloat(amtIn.value) || 0;
+                const r = parseFloat(rateIn.value) || 0;
+                if (a && r) targetIn.value = (a * r).toFixed(2);
+            });
+
+            rateIn.addEventListener('input', () => {
+                const a = parseFloat(amtIn.value) || 0;
+                const r = parseFloat(rateIn.value) || 0;
+                if (a && r) targetIn.value = (a * r).toFixed(2);
+            });
+
+            targetIn.addEventListener('input', () => {
+                const a = parseFloat(amtIn.value) || 0;
+                const t = parseFloat(targetIn.value) || 0;
+                if (a && t) rateIn.value = parseFloat((t / a).toFixed(6));
+            });
+        }
+
+        function updateAccountLabels() {
+            if (accountsData.length === 0) return;
+            const fromId = document.getElementById('op-account-id').value;
+            const toId = document.getElementById('op-to-account-id').value;
+            const type = document.getElementById('op-type').value;
+            
+            const fromAcc = accountsData.find(a => a.id === fromId);
+            const toAcc = accountsData.find(a => a.id === toId);
+
+            if(fromAcc) {
+                document.getElementById('source-currency-badge').innerText = fromAcc.currency;
+                document.getElementById('comm-currency-badge').innerText = fromAcc.currency;
+            }
+            if(toAcc && type === 'Перевод') {
+                document.getElementById('target-currency-badge').innerText = toAcc.currency;
             }
         }
 
@@ -348,17 +409,12 @@
             if (!filter) return;
             
             const periods = new Set();
-            
-            // Всегда добавляем в список текущий месяц
             const now = new Date();
-            const currentPeriod = now.toISOString().substring(0, 7); // формат "YYYY-MM"
+            const currentPeriod = now.toISOString().substring(0, 7); 
             periods.add(currentPeriod);
             
-            // Вытаскиваем уникальные периоды из всех транзакций в базе
             transactionsData.forEach(t => {
-                if (t.created_at) {
-                    periods.add(t.created_at.substring(0, 7));
-                }
+                if (t.created_at) periods.add(t.created_at.substring(0, 7));
             });
             
             const sortedPeriods = Array.from(periods).sort().reverse();
@@ -372,13 +428,8 @@
             });
             
             html += `<option value="All">Все время</option>`;
-            
             filter.innerHTML = html;
-            
-            // Если мы только зашли на сайт, ставим по умолчанию текущий месяц
-            if(!filter.value) {
-                filter.value = currentPeriod;
-            }
+            if(!filter.value) filter.value = currentPeriod;
         }
 
         /* --- ОТОБРАЖЕНИЕ --- */
@@ -468,7 +519,6 @@
                                 const toName = toAcc ? toAcc.name : 'Удаленный счет';
                                 titleHtml = `Перевод средств`;
                                 
-                                // Вывод суб-информации о комиссии и курсе в названии операции
                                 let details = [];
                                 if (t.commission && Number(t.commission) > 0) details.push(`ком. ${formatMoney(t.commission, t.currency)}`);
                                 if (t.exchange_rate && Number(t.exchange_rate) !== 1) details.push(`курс: ${t.exchange_rate}`);
@@ -514,7 +564,6 @@
             container.innerHTML = html;
         }
 
-        // Меню действий с операцией
         function toggleOpMenu(id, event) {
             event.stopPropagation();
             document.querySelectorAll('[id^="op-menu-"]').forEach(m => {
@@ -531,7 +580,6 @@
             }
         });
 
-        // Статистика с учетом фильтрации месяцев
         function calculateStats() {
             let incByn = 0, incRub = 0, expByn = 0, expRub = 0;
             const periodFilter = document.getElementById('month-filter').value;
@@ -556,21 +604,17 @@
                 }
             });
 
-            // Обновляем текст в бейдже сбоку
             document.getElementById('sidebar-period-badge').innerText = periodFilter === 'All' ? 'Все время' : periodFilter;
 
-            // Карточки сверху (выводим корректно собранные суммы)
             document.getElementById('stat-inc-byn').innerText = `+${formatMoney(incByn, 'Br')}`;
             document.getElementById('stat-inc-rub').innerText = `+${formatMoney(incRub, '₽')}`;
             document.getElementById('stat-exp-total').innerText = `-${formatMoney(expByn, 'Br')} / -${formatMoney(expRub, '₽')}`;
 
-            // Сводка боковой панели
             document.getElementById('sidebar-inc-byn').innerText = formatMoney(incByn, 'Br');
             document.getElementById('sidebar-inc-rub').innerText = formatMoney(incRub, '₽');
             document.getElementById('sidebar-exp-byn').innerText = formatMoney(expByn, 'Br');
             document.getElementById('sidebar-exp-rub').innerText = formatMoney(expRub, '₽');
 
-            // Топ 3 расходов за выбранный период
             monthExpenses.sort((a, b) => b.amount - a.amount);
             const topOpsContainer = document.getElementById('top-operations-container');
             if(monthExpenses.length > 0) {
@@ -587,14 +631,12 @@
                 topOpsContainer.innerHTML = `<p class="text-sm text-gray-400">Нет трат за период</p>`;
             }
 
-            // Топ категории за выбранный период
             const topExp = Object.keys(catCounts.exp).sort((a,b) => catCounts.exp[b] - catCounts.exp[a])[0] || 'Нет трат';
             const topInc = Object.keys(catCounts.inc).sort((a,b) => catCounts.inc[b] - catCounts.inc[a])[0] || 'Нет доходов';
             document.getElementById('top-expense-cat').innerText = topExp;
             document.getElementById('top-income-cat').innerText = topInc;
         }
 
-        /* --- ЭКСПОРТ В CSV С УЧЕТОМ МЕСЯЦА --- */
         function exportToCSV() {
             const periodFilter = document.getElementById('month-filter').value;
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
@@ -620,7 +662,6 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        /* --- ФОРМА И МОДАЛКА --- */
         const modal = document.getElementById('transaction-modal');
         const modalContent = document.getElementById('transaction-modal-content');
 
@@ -640,11 +681,13 @@
                 document.getElementById('op-date').valueAsDate = new Date();
                 document.getElementById('op-commission').value = '0.00';
                 document.getElementById('op-exchange-rate').value = '1.0000';
+                document.getElementById('op-target-amount').value = '';
                 setOpType('Расход');
             }
 
             modal.classList.remove('hidden'); modal.classList.add('flex');
             setTimeout(() => { modalContent.classList.remove('scale-95'); modalContent.classList.add('scale-100'); }, 10);
+            updateAccountLabels();
         }
 
         function closeTransactionModal() {
@@ -656,6 +699,7 @@
                 document.getElementById('op-description').value = '';
                 document.getElementById('op-commission').value = '0.00';
                 document.getElementById('op-exchange-rate').value = '1.0000';
+                document.getElementById('op-target-amount').value = '';
             }, 150);
         }
 
@@ -671,14 +715,16 @@
 
             if (type === 'Перевод') {
                 document.getElementById('field-account-to').classList.remove('hidden');
-                document.getElementById('field-transfer-details').classList.remove('hidden'); // Показываем комиссию и курс
+                document.getElementById('field-transfer-details').classList.remove('hidden'); 
                 document.getElementById('field-category-date').classList.add('hidden');
                 document.getElementById('label-acc-from').innerText = 'Счет списания';
+                document.getElementById('label-amount').innerText = 'Сумма списания';
             } else {
                 document.getElementById('field-account-to').classList.add('hidden');
-                document.getElementById('field-transfer-details').classList.add('hidden'); // Прячем комиссию и курс
+                document.getElementById('field-transfer-details').classList.add('hidden'); 
                 document.getElementById('field-category-date').classList.remove('hidden');
                 document.getElementById('label-acc-from').innerText = type === 'Доход' ? 'Счет зачисления' : 'Счет списания';
+                document.getElementById('label-amount').innerText = 'Сумма';
                 
                 const catSelect = document.getElementById('op-category');
                 catSelect.innerHTML = '';
@@ -687,6 +733,7 @@
                 });
                 updateSubcategories();
             }
+            updateAccountLabels();
         }
 
         function updateSubcategories() {
@@ -721,6 +768,7 @@
             else if(t.type === 'Перевод') {
                 const commission = Number(t.commission || 0);
                 const rate = Number(t.exchange_rate || 1);
+                
                 // Возвращаем сумму + комиссию на счет списания
                 await updateBalance(t.account_id, t.amount + commission);
                 // Списываем со счета зачисления сконвертированную сумму
@@ -760,6 +808,7 @@
                 document.getElementById('op-to-account-id').value = t.to_account_id;
                 document.getElementById('op-commission').value = t.commission || '0.00';
                 document.getElementById('op-exchange-rate').value = t.exchange_rate || '1.0000';
+                document.getElementById('op-target-amount').value = (t.amount * (t.exchange_rate || 1)).toFixed(2);
             } else {
                 document.getElementById('op-category').value = t.category;
                 updateSubcategories();
@@ -779,9 +828,6 @@
             const amount = parseFloat(document.getElementById('op-amount').value) || 0;
             const accountId = document.getElementById('op-account-id').value;
             const dateInput = document.getElementById('op-date').value;
-            
-            const commission = type === 'Перевод' ? parseFloat(document.getElementById('op-commission').value) || 0 : 0;
-            const exchangeRate = type === 'Перевод' ? parseFloat(document.getElementById('op-exchange-rate').value) || 1 : 1;
 
             const dateObj = new Date(dateInput);
             dateObj.setHours(new Date().getHours());
@@ -803,13 +849,13 @@
                     type: type, amount: amount, currency: account.currency,
                     account_id: accountId, created_at: createdAt,
                     description: document.getElementById('op-description').value,
-                    commission: commission,
-                    exchange_rate: exchangeRate
                 };
 
                 if (type === 'Расход' || type === 'Доход' || type === 'Инвестиция') {
                     payload.category = document.getElementById('op-category').value;
                     payload.subcategory = document.getElementById('op-subcategory').value;
+                    payload.commission = 0;
+                    payload.exchange_rate = 1;
                     
                     const diff = type === 'Доход' ? amount : -amount;
                     await updateBalance(accountId, diff);
@@ -818,13 +864,27 @@
                     const toAccountId = document.getElementById('op-to-account-id').value;
                     if (accountId === toAccountId) throw new Error('Нельзя перевести на тот же самый счет!');
                     
+                    const commission = parseFloat(document.getElementById('op-commission').value) || 0;
+                    let exchangeRate = parseFloat(document.getElementById('op-exchange-rate').value) || 1;
+                    let targetAmount = parseFloat(document.getElementById('op-target-amount').value);
+
+                    // Если сумма зачисления не указана, вычисляем ее по курсу
+                    if (!targetAmount) {
+                        targetAmount = amount * exchangeRate;
+                    } else {
+                        // Если суммы обе введены, фиксируем точный курс для базы
+                        exchangeRate = targetAmount / amount;
+                    }
+
                     payload.category = 'Перевод';
                     payload.to_account_id = toAccountId;
+                    payload.commission = commission;
+                    payload.exchange_rate = exchangeRate;
                     
                     // Списание с аккаунта отправления: Сумма перевода + Комиссия
                     await updateBalance(accountId, -(amount + commission));
-                    // Зачисление на целевой аккаунт: Сумма перевода * Курс конвертации
-                    await updateBalance(toAccountId, (amount * exchangeRate));
+                    // Зачисление на целевой аккаунт: Сумма зачисления
+                    await updateBalance(toAccountId, targetAmount);
                 }
 
                 if(editId) {
