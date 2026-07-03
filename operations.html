@@ -214,7 +214,7 @@
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform my-8" id="transaction-modal-content">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-gray-900" id="modal-title">Новая операция</h3>
-                <button onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-700 transition">
+                <button type="button" onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-700 transition">
                     <i class="ph ph-x text-2xl"></i>
                 </button>
             </div>
@@ -229,17 +229,37 @@
             <form onsubmit="submitTransaction(event)" novalidate class="space-y-4">
                 <input type="hidden" id="op-id" value=""> <input type="hidden" id="op-type" value="Расход">
 
-                <div id="field-account-from">
+                <div id="field-account-from" class="relative">
                     <label class="block text-sm font-medium text-gray-700 mb-1" id="label-acc-from">Счет списания</label>
-                    <select id="op-account-id" required onchange="updateAccountLabels()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
+                    <div class="relative">
+                        <button type="button" onclick="toggleCustomDropdown('from')" class="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-left shadow-sm">
+                            <div id="selected-acc-from" class="flex items-center space-x-3 truncate">
+                                <span class="text-gray-400">Выберите счет...</span>
+                            </div>
+                            <i class="ph ph-caret-down text-gray-400"></i>
+                        </button>
+                        <div id="list-dropdown-from" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-60 overflow-y-auto py-1">
+                            </div>
+                    </div>
+                    <select id="op-account-id" required onchange="updateAccountLabels()" class="hidden"></select>
                 </div>
 
-                <div id="field-account-to" class="hidden">
+                <div id="field-account-to" class="hidden relative mt-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Счет зачисления</label>
-                    <select id="op-to-account-id" onchange="updateAccountLabels()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
+                    <div class="relative">
+                        <button type="button" onclick="toggleCustomDropdown('to')" class="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-left shadow-sm">
+                            <div id="selected-acc-to" class="flex items-center space-x-3 truncate">
+                                <span class="text-gray-400">Выберите счет...</span>
+                            </div>
+                            <i class="ph ph-caret-down text-gray-400"></i>
+                        </button>
+                        <div id="list-dropdown-to" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-60 overflow-y-auto py-1">
+                            </div>
+                    </div>
+                    <select id="op-to-account-id" onchange="updateAccountLabels()" class="hidden"></select>
                 </div>
 
-                <div>
+                <div class="mt-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1" id="label-amount">Сумма</label>
                     <div class="relative">
                         <input type="number" id="op-amount" required placeholder="0.00" step="0.01" class="w-full px-4 py-3 text-lg font-semibold border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition pr-12">
@@ -317,7 +337,7 @@
 
         const categoriesData = {
             'Расход': {
-                'Основное': ['квартира', 'коммуналка', 'интернет', 'телефоны', 'налоги бел', 'налоги рос', 'налоги 13%', 'подписки'],
+                'Основное': ['квартира', 'коммуналка', 'интернет', 'телефоны', 'налоги бел', 'налоги рос', 'налоги 13%', 'подписки', 'работа'],
                 'Еда': ['мясо', 'колбасы', 'хлебобулочные', 'молочка', 'крупы', 'консервы', 'рыба', 'специи', 'снэки', 'фрукты и овощи', 'вода', 'напитки', 'алкоголь', 'масло', 'конфеты', 'чай', 'на заказ', 'соусы', 'пакет'],
                 'Машина': ['бензин', 'сервис', 'мойка'],
                 'Развлечения': ['развлечения', 'красота', 'гигиена', 'медицина', 'одежда', 'обувь', 'аксессуары', 'книги', 'подарки', 'электроника', 'учеба'],
@@ -353,10 +373,55 @@
                 initMonthFilter();
                 renderTransactions();
                 calculateStats();
-                setupAutoCalculator(); // Подключаем калькулятор курсов
+                setupAutoCalculator(); 
             } catch (error) {
                 console.error("Ошибка загрузки:", error);
             }
+        }
+
+        /* --- ЛОГИКА ЦВЕТОВ БАНКОВ --- */
+        function getBankColor(accountName) {
+            if (!accountName) return 'bg-gray-300';
+            const name = accountName.toLowerCase();
+            if (name.includes('альфа') || name.includes('alfa')) return 'bg-red-500';
+            if (name.includes('т-банк') || name.includes('тинькофф') || name.includes('т-инвестиции')) return 'bg-yellow-400';
+            if (name.includes('мтб')) return 'bg-blue-500';
+            if (name.includes('юмани')) return 'bg-purple-500';
+            if (name.includes('приор')) return 'bg-green-500';
+            if (name.includes('беларусбанк')) return 'bg-emerald-600';
+            return 'bg-gray-300';
+        }
+
+        function toggleCustomDropdown(type) {
+            const list = document.getElementById(`list-dropdown-${type}`);
+            const otherType = type === 'from' ? 'to' : 'from';
+            document.getElementById(`list-dropdown-${otherType}`)?.classList.add('hidden');
+            list.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (openMenuId && !e.target.closest('.op-menu-container')) {
+                document.getElementById(`op-menu-${openMenuId}`)?.classList.add('hidden');
+                openMenuId = null;
+            }
+            if (!e.target.closest('#field-account-from')) document.getElementById('list-dropdown-from')?.classList.add('hidden');
+            if (!e.target.closest('#field-account-to')) document.getElementById('list-dropdown-to')?.classList.add('hidden');
+        });
+
+        function selectCustomAccount(type, id, name, balance, currency) {
+            const selectEl = document.getElementById(type === 'from' ? 'op-account-id' : 'op-to-account-id');
+            selectEl.value = id; 
+            
+            const color = getBankColor(name);
+            const displayHtml = `
+                <div class="w-3.5 h-3.5 rounded-full ${color} shadow-sm shrink-0"></div>
+                <span class="font-medium text-gray-900 truncate">${name}</span>
+                <span class="text-gray-500 ml-1 whitespace-nowrap">(${formatMoney(balance, currency)})</span>
+            `;
+            
+            document.getElementById(`selected-acc-${type}`).innerHTML = displayHtml;
+            document.getElementById(`list-dropdown-${type}`).classList.add('hidden');
+            updateAccountLabels();
         }
 
         /* --- ЛОГИКА УМНОГО КАЛЬКУЛЯТОРА --- */
@@ -573,12 +638,6 @@
             if (menu) menu.classList.toggle('hidden');
             openMenuId = menu && !menu.classList.contains('hidden') ? id : null;
         }
-        document.addEventListener('click', (e) => {
-            if (openMenuId && !e.target.closest('.op-menu-container')) {
-                document.getElementById(`op-menu-${openMenuId}`)?.classList.add('hidden');
-                openMenuId = null;
-            }
-        });
 
         function calculateStats() {
             let incByn = 0, incRub = 0, expByn = 0, expRub = 0;
@@ -669,11 +728,31 @@
             if (accountsData.length === 0) { alert("Сначала создайте счет в разделе 'Счета'."); return; }
             
             let optionsHtml = '';
+            let customListHtml = '';
+            
             accountsData.forEach(acc => {
-                optionsHtml += `<option value="${acc.id}">${acc.name} (${formatMoney(acc.balance, acc.currency)})</option>`;
+                const color = getBankColor(acc.name);
+                optionsHtml += `<option value="${acc.id}">${acc.name}</option>`;
+                
+                const btnHtml = `
+                    <button type="button" onclick="selectCustomAccount('TYPE', '${acc.id}', '${acc.name}', ${acc.balance}, '${acc.currency}')" class="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 transition border-b border-gray-50 last:border-0">
+                        <div class="w-3.5 h-3.5 rounded-full ${color} shadow-sm shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">${acc.name}</p>
+                        </div>
+                        <div class="text-sm text-gray-500 font-medium whitespace-nowrap">
+                            ${formatMoney(acc.balance, acc.currency)}
+                        </div>
+                    </button>
+                `;
+                customListHtml += btnHtml;
             });
+
             document.getElementById('op-account-id').innerHTML = optionsHtml;
             document.getElementById('op-to-account-id').innerHTML = optionsHtml;
+            
+            document.getElementById('list-dropdown-from').innerHTML = customListHtml.replace(/TYPE/g, 'from');
+            document.getElementById('list-dropdown-to').innerHTML = customListHtml.replace(/TYPE/g, 'to');
 
             if(!document.getElementById('op-id').value) {
                 document.getElementById('modal-title').innerText = 'Новая операция';
@@ -683,6 +762,11 @@
                 document.getElementById('op-exchange-rate').value = '1.0000';
                 document.getElementById('op-target-amount').value = '';
                 setOpType('Расход');
+                
+                if(accountsData.length > 0) {
+                    selectCustomAccount('from', accountsData[0].id, accountsData[0].name, accountsData[0].balance, accountsData[0].currency);
+                    selectCustomAccount('to', accountsData[0].id, accountsData[0].name, accountsData[0].balance, accountsData[0].currency);
+                }
             }
 
             modal.classList.remove('hidden'); modal.classList.add('flex');
@@ -741,11 +825,10 @@
             const cat = document.getElementById('op-category').value;
             const subSelect = document.getElementById('op-subcategory');
             
-            subSelect.innerHTML = '';
+            subSelect.innerHTML = '<option value="">Без подкатегории</option>';
             const subs = categoriesData[type]?.[cat] || [];
             
             if (subs.length === 0) {
-                subSelect.innerHTML = '<option value="">-</option>';
                 subSelect.disabled = true;
             } else {
                 subSelect.disabled = false;
@@ -769,9 +852,7 @@
                 const commission = Number(t.commission || 0);
                 const rate = Number(t.exchange_rate || 1);
                 
-                // Возвращаем сумму + комиссию на счет списания
                 await updateBalance(t.account_id, t.amount + commission);
-                // Списываем со счета зачисления сконвертированную сумму
                 await updateBalance(t.to_account_id, -(t.amount * rate));
             }
         }
@@ -806,6 +887,9 @@
             
             if(t.type === 'Перевод') {
                 document.getElementById('op-to-account-id').value = t.to_account_id;
+                const toAcc = accountsData.find(a => a.id === t.to_account_id);
+                if(toAcc) selectCustomAccount('to', toAcc.id, toAcc.name, toAcc.balance, toAcc.currency);
+                
                 document.getElementById('op-commission').value = t.commission || '0.00';
                 document.getElementById('op-exchange-rate').value = t.exchange_rate || '1.0000';
                 document.getElementById('op-target-amount').value = (t.amount * (t.exchange_rate || 1)).toFixed(2);
@@ -814,6 +898,10 @@
                 updateSubcategories();
                 document.getElementById('op-subcategory').value = t.subcategory || '';
             }
+            
+            const fromAcc = accountsData.find(a => a.id === t.account_id);
+            if(fromAcc) selectCustomAccount('from', fromAcc.id, fromAcc.name, fromAcc.balance, fromAcc.currency);
+
             openTransactionModal();
             document.getElementById(`op-menu-${id}`)?.classList.add('hidden');
         }
@@ -868,11 +956,9 @@
                     let exchangeRate = parseFloat(document.getElementById('op-exchange-rate').value) || 1;
                     let targetAmount = parseFloat(document.getElementById('op-target-amount').value);
 
-                    // Если сумма зачисления не указана, вычисляем ее по курсу
                     if (!targetAmount) {
                         targetAmount = amount * exchangeRate;
                     } else {
-                        // Если суммы обе введены, фиксируем точный курс для базы
                         exchangeRate = targetAmount / amount;
                     }
 
@@ -881,9 +967,7 @@
                     payload.commission = commission;
                     payload.exchange_rate = exchangeRate;
                     
-                    // Списание с аккаунта отправления: Сумма перевода + Комиссия
                     await updateBalance(accountId, -(amount + commission));
-                    // Зачисление на целевой аккаунт: Сумма зачисления
                     await updateBalance(toAccountId, targetAmount);
                 }
 
