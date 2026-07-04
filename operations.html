@@ -48,19 +48,19 @@
                 <span class="text-xl font-bold text-gray-900">FinFlow</span>
             </div>
             <nav class="mt-4 px-4 space-y-1">
-    <a href="index.html" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
-        <i class="ph ph-wallet text-xl"></i>
-        <span>Счета</span>
-    </a>
-    <a href="operations.html" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
-        <i class="ph ph-list-dashes text-xl"></i>
-        <span>Операции</span>
-    </a>
-    <a href="budgets.html" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
-        <i class="ph ph-chart-pie-slice text-xl"></i>
-        <span>Бюджеты</span>
-    </a>
-</nav>
+                <a href="index.html" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="ph ph-wallet text-xl"></i>
+                    <span>Счета</span>
+                </a>
+                <a href="operations.html" class="flex items-center space-x-3 w-full px-4 py-3 bg-brand-light text-brand rounded-xl font-medium transition">
+                    <i class="ph ph-list-dashes text-xl"></i>
+                    <span>Операции</span>
+                </a>
+                <a href="budgets.html" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="ph ph-chart-pie-slice text-xl"></i>
+                    <span>Бюджеты</span>
+                </a>
+            </nav>
         </div>
         <div class="p-4 border-t border-gray-200 m-4 flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-xl transition">
             <img src="https://ui-avatars.com/api/?name=Андрей+Иванов&background=random" alt="Avatar" class="w-10 h-10 rounded-full" />
@@ -242,8 +242,7 @@
                             </div>
                             <i class="ph ph-caret-down text-gray-400"></i>
                         </button>
-                        <div id="list-dropdown-from" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-60 overflow-y-auto py-1">
-                            </div>
+                        <div id="list-dropdown-from" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-60 overflow-y-auto py-1"></div>
                     </div>
                     <select id="op-account-id" required onchange="updateAccountLabels()" class="hidden"></select>
                 </div>
@@ -257,8 +256,7 @@
                             </div>
                             <i class="ph ph-caret-down text-gray-400"></i>
                         </button>
-                        <div id="list-dropdown-to" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-60 overflow-y-auto py-1">
-                            </div>
+                        <div id="list-dropdown-to" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-60 overflow-y-auto py-1"></div>
                     </div>
                     <select id="op-to-account-id" onchange="updateAccountLabels()" class="hidden"></select>
                 </div>
@@ -422,7 +420,6 @@
                 <span class="font-medium text-gray-900 truncate">${name}</span>
                 <span class="text-gray-500 ml-1 whitespace-nowrap">(${formatMoney(balance, currency)})</span>
             `;
-            
             document.getElementById(`selected-acc-${type}`).innerHTML = displayHtml;
             document.getElementById(`list-dropdown-${type}`).classList.add('hidden');
             updateAccountLabels();
@@ -440,13 +437,11 @@
                 const r = parseFloat(rateIn.value) || 0;
                 if (a && r) targetIn.value = (a * r).toFixed(2);
             });
-
             rateIn.addEventListener('input', () => {
                 const a = parseFloat(amtIn.value) || 0;
                 const r = parseFloat(rateIn.value) || 0;
                 if (a && r) targetIn.value = (a * r).toFixed(2);
             });
-
             targetIn.addEventListener('input', () => {
                 const a = parseFloat(amtIn.value) || 0;
                 const t = parseFloat(targetIn.value) || 0;
@@ -481,21 +476,17 @@
             const now = new Date();
             const currentPeriod = now.toISOString().substring(0, 7); 
             periods.add(currentPeriod);
-            
             transactionsData.forEach(t => {
                 if (t.created_at) periods.add(t.created_at.substring(0, 7));
             });
-            
             const sortedPeriods = Array.from(periods).sort().reverse();
             const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-            
             let html = '';
             sortedPeriods.forEach(p => {
                 const [year, month] = p.split('-');
                 const monthName = monthNames[parseInt(month) - 1];
                 html += `<option value="${p}">${monthName} ${year}</option>`;
             });
-            
             html += `<option value="All">Все время</option>`;
             filter.innerHTML = html;
             if(!filter.value) filter.value = currentPeriod;
@@ -515,7 +506,6 @@
         function getCategoryStyle(category, type) {
             if (type === 'Перевод') return { icon: 'ph-arrows-left-right', color: 'bg-purple-100 text-purple-600', badge: 'bg-purple-50 text-purple-600' };
             if (type === 'Инвестиция') return { icon: 'ph-trend-up', color: 'bg-indigo-100 text-indigo-600', badge: 'bg-indigo-50 text-indigo-600' };
-            
             const styles = {
                 'Основное': { icon: 'ph-house', color: 'bg-blue-100 text-blue-600', badge: 'bg-blue-50 text-blue-600' },
                 'Еда': { icon: 'ph-shopping-cart', color: 'bg-orange-100 text-orange-600', badge: 'bg-orange-50 text-orange-600' },
@@ -534,7 +524,6 @@
             const currencyFilter = document.getElementById('currency-filter').value;
             const periodFilter = document.getElementById('month-filter').value;
             container.innerHTML = '';
-
             let filtered = transactionsData.filter(t => {
                 const matchTab = currentTab === 'Все' || t.type === currentTab;
                 const matchSearch = (t.description || '').toLowerCase().includes(searchQuery) || 
@@ -544,7 +533,6 @@
                 const matchPeriod = periodFilter === 'All' || (t.created_at && t.created_at.startsWith(periodFilter));
                 return matchTab && matchSearch && matchCurrency && matchPeriod;
             });
-
             if (filtered.length === 0) {
                 container.innerHTML = `<div class="p-8 text-center text-gray-400 bg-white rounded-2xl border border-gray-200 border-dashed">Операций в этом периоде пока нет.</div>`;
                 return;
@@ -579,7 +567,7 @@
                             let amountHtml = '';
                             let titleHtml = t.category;
                             if (t.subcategory) titleHtml += ` <span class="text-gray-400 text-sm font-normal">/ ${t.subcategory}</span>`;
-
+                            
                             if (t.type === 'Доход') amountHtml = `<span class="font-semibold text-emerald-500 whitespace-nowrap">+${formatMoney(t.amount, t.currency)}</span>`;
                             else if (t.type === 'Расход') amountHtml = `<span class="font-semibold text-gray-900 whitespace-nowrap">-${formatMoney(t.amount, t.currency)}</span>`;
                             else if (t.type === 'Инвестиция') amountHtml = `<span class="font-semibold text-indigo-600 whitespace-nowrap">${formatMoney(t.amount, t.currency)}</span>`;
@@ -649,7 +637,6 @@
             
             let monthExpenses = [];
             let catCounts = { exp: {}, inc: {} };
-
             transactionsData.forEach(t => {
                 const matchPeriod = periodFilter === 'All' || (t.created_at && t.created_at.startsWith(periodFilter));
                 
@@ -666,7 +653,6 @@
                     }
                 }
             });
-
             document.getElementById('sidebar-period-badge').innerText = periodFilter === 'All' ? 'Все время' : periodFilter;
 
             document.getElementById('stat-inc-byn').innerText = `+${formatMoney(incByn, 'Br')}`;
@@ -717,17 +703,16 @@
                 ].map(v => `"${v}"`).join(",");
                 csvContent += row + "\n";
             });
-
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
             link.setAttribute("download", `operations_${periodFilter === 'All' ? 'all-time' : periodFilter}.csv`);
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            document.body.appendChild(link); link.click();
+            document.body.removeChild(link);
         }
 
         const modal = document.getElementById('transaction-modal');
         const modalContent = document.getElementById('transaction-modal-content');
-
         function openTransactionModal() {
             if (accountsData.length === 0) { alert("Сначала создайте счет в разделе 'Счета'."); return; }
             
@@ -757,7 +742,7 @@
             
             document.getElementById('list-dropdown-from').innerHTML = customListHtml.replace(/TYPE/g, 'from');
             document.getElementById('list-dropdown-to').innerHTML = customListHtml.replace(/TYPE/g, 'to');
-
+            
             if(!document.getElementById('op-id').value) {
                 document.getElementById('modal-title').innerText = 'Новая операция';
                 document.getElementById('submit-btn').innerText = 'Добавить операцию';
@@ -766,20 +751,21 @@
                 document.getElementById('op-exchange-rate').value = '1.0000';
                 document.getElementById('op-target-amount').value = '';
                 setOpType('Расход');
-                
                 if(accountsData.length > 0) {
                     selectCustomAccount('from', accountsData[0].id, accountsData[0].name, accountsData[0].balance, accountsData[0].currency);
                     selectCustomAccount('to', accountsData[0].id, accountsData[0].name, accountsData[0].balance, accountsData[0].currency);
                 }
             }
 
-            modal.classList.remove('hidden'); modal.classList.add('flex');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
             setTimeout(() => { modalContent.classList.remove('scale-95'); modalContent.classList.add('scale-100'); }, 10);
             updateAccountLabels();
         }
 
         function closeTransactionModal() {
-            modalContent.classList.remove('scale-100'); modalContent.classList.add('scale-95');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
             setTimeout(() => {
                 modal.classList.add('hidden'); modal.classList.remove('flex');
                 document.getElementById('op-id').value = '';
@@ -797,10 +783,9 @@
             btns.forEach(b => {
                 document.getElementById(`btn-type-${b}`).className = 'flex-1 py-1.5 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-900 transition flex items-center justify-center gap-1';
             });
-            
             const activeMap = {'Расход':'expense', 'Доход':'income', 'Перевод':'transfer', 'Инвестиция':'investment'};
             document.getElementById(`btn-type-${activeMap[type]}`).className = 'flex-1 py-1.5 text-sm font-medium rounded-lg bg-white shadow-sm text-gray-900 transition flex items-center justify-center gap-1';
-
+            
             if (type === 'Перевод') {
                 document.getElementById('field-account-to').classList.remove('hidden');
                 document.getElementById('field-transfer-details').classList.remove('hidden'); 
@@ -809,7 +794,7 @@
                 document.getElementById('label-amount').innerText = 'Сумма списания';
             } else {
                 document.getElementById('field-account-to').classList.add('hidden');
-                document.getElementById('field-transfer-details').classList.add('hidden'); 
+                document.getElementById('field-transfer-details').classList.add('hidden');
                 document.getElementById('field-category-date').classList.remove('hidden');
                 document.getElementById('label-acc-from').innerText = type === 'Доход' ? 'Счет зачисления' : 'Счет списания';
                 document.getElementById('label-amount').innerText = 'Сумма';
@@ -831,7 +816,6 @@
             
             subSelect.innerHTML = '<option value="">Без подкатегории</option>';
             const subs = categoriesData[type]?.[cat] || [];
-            
             if (subs.length === 0) {
                 subSelect.disabled = true;
             } else {
@@ -840,38 +824,65 @@
             }
         }
 
+        // --- БЕЗОПАСНАЯ И ТОЧНАЯ МАТЕМАТИКА БАЛАНСОВ ---
         async function updateBalance(accountId, diffAmount) {
             const acc = accountsData.find(a => a.id === accountId);
             if(acc) {
-                const newBal = Number(acc.balance) + diffAmount;
-                await supabaseClient.from('accounts').update({ balance: newBal }).eq('id', accountId);
-                acc.balance = newBal;
+                // Жестко приводим к числу и отбрасываем артефакты JS (типа 0.3000000004)
+                const currentBal = parseFloat(acc.balance) || 0;
+                const diff = parseFloat(diffAmount) || 0;
+                const newBal = parseFloat((currentBal + diff).toFixed(2));
+                
+                const { error } = await supabaseClient.from('accounts').update({ balance: newBal }).eq('id', accountId);
+                if (error) throw error;
+                
+                // Обновляем локально сразу же, чтобы при цепочке вызовов данные были актуальны
+                acc.balance = newBal; 
             }
         }
 
         async function revertTransactionBalance(t) {
-            if(t.type === 'Доход') await updateBalance(t.account_id, -t.amount);
-            else if(t.type === 'Расход' || t.type === 'Инвестиция') await updateBalance(t.account_id, t.amount);
-            else if(t.type === 'Перевод') {
-                const commission = Number(t.commission || 0);
-                const rate = Number(t.exchange_rate || 1);
+            const amount = parseFloat(t.amount) || 0;
+            
+            if (t.type === 'Доход') {
+                // Если мы удаляем доход, деньги со счета нужно списать
+                await updateBalance(t.account_id, -amount);
+            } else if (t.type === 'Расход' || t.type === 'Инвестиция') {
+                // Если удаляем расход, деньги нужно ВЕРНУТЬ на счет
+                await updateBalance(t.account_id, amount);
+            } else if (t.type === 'Перевод') {
+                const commission = parseFloat(t.commission) || 0;
+                const rate = parseFloat(t.exchange_rate) || 1;
                 
-                await updateBalance(t.account_id, t.amount + commission);
-                await updateBalance(t.to_account_id, -(t.amount * rate));
+                // Возвращаем сумму + комиссию на счет списания
+                await updateBalance(t.account_id, amount + commission);
+                // Списываем со счета зачисления сконвертированную сумму
+                await updateBalance(t.to_account_id, -parseFloat((amount * rate).toFixed(2)));
             }
         }
 
         async function deleteOperation(id) {
             if(!confirm('Удалить операцию? Баланс счета будет пересчитан автоматически.')) return;
-            try {
-                const t = transactionsData.find(x => x.id === id);
-                if(!t) return;
+            
+            // Предотвращение двойных кликов
+            const menuBtn = document.querySelector(`#op-menu-${id}`)?.parentElement?.querySelector('button');
+            if(menuBtn) menuBtn.disabled = true;
 
-                await revertTransactionBalance(t);
-                await supabaseClient.from('transactions').delete().eq('id', id);
-                initData();
+            try {
+                // Запрашиваем свежие данные транзакции из базы
+                const { data: txData, error: txErr } = await supabaseClient.from('transactions').select('*').eq('id', id).single();
+                if(txErr || !txData) throw new Error("Транзакция не найдена");
+
+                await revertTransactionBalance(txData);
+                
+                const { error: delErr } = await supabaseClient.from('transactions').delete().eq('id', id);
+                if (delErr) throw delErr;
+                
+                // Обязательно ждем завершения загрузки новых данных перед тем как продолжить
+                await initData();
             } catch(e) {
                 alert("Ошибка при удалении: " + e.message);
+                if(menuBtn) menuBtn.disabled = false;
             }
         }
 
@@ -896,7 +907,7 @@
                 
                 document.getElementById('op-commission').value = t.commission || '0.00';
                 document.getElementById('op-exchange-rate').value = t.exchange_rate || '1.0000';
-                document.getElementById('op-target-amount').value = (t.amount * (t.exchange_rate || 1)).toFixed(2);
+                document.getElementById('op-target-amount').value = parseFloat((t.amount * (t.exchange_rate || 1)).toFixed(2));
             } else {
                 document.getElementById('op-category').value = t.category;
                 updateSubcategories();
@@ -933,7 +944,7 @@
 
             try {
                 if(editId) {
-                    const oldTx = transactionsData.find(x => x.id === editId);
+                    const { data: oldTx, error: txErr } = await supabaseClient.from('transactions').select('*').eq('id', editId).single();
                     if(oldTx) await revertTransactionBalance(oldTx);
                 }
 
@@ -961,7 +972,7 @@
                     let targetAmount = parseFloat(document.getElementById('op-target-amount').value);
 
                     if (!targetAmount) {
-                        targetAmount = amount * exchangeRate;
+                        targetAmount = parseFloat((amount * exchangeRate).toFixed(2));
                     } else {
                         exchangeRate = targetAmount / amount;
                     }
@@ -982,11 +993,12 @@
                 }
 
                 closeTransactionModal();
-                initData(); 
+                await initData();
             } catch (err) {
                 alert('Ошибка: ' + err.message);
             } finally {
-                btn.innerText = 'Сохранить'; btn.disabled = false;
+                btn.innerText = 'Сохранить';
+                btn.disabled = false;
             }
         }
 
