@@ -27,7 +27,6 @@
         .donut-chart { border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; }
         .donut-inner { width: 70%; height: 70%; background-color: white; border-radius: 50%; position: absolute; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 
-        /* Плавное появление кнопок редактирования */
         .action-btns { opacity: 0; transition: opacity 0.2s ease-in-out; }
         .group:hover .action-btns { opacity: 1; }
     </style>
@@ -83,7 +82,6 @@
                         <div id="notif-list" class="max-h-64 overflow-y-auto"></div>
                     </div>
                 </div>
-
                 <button onclick="exportToCSV()" class="flex items-center space-x-2 border border-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 transition shadow-sm">
                     <i class="ph ph-download-simple"></i><span class="hidden sm:inline">Экспорт CSV</span>
                 </button>
@@ -167,12 +165,12 @@
                     
                     <div class="px-6 pt-4 border-b border-gray-100 flex justify-between items-end bg-gray-50">
                         <div class="flex space-x-6 text-sm font-medium">
-                            <button id="tab-cat" onclick="switchTab('cat')" class="text-brand border-b-2 border-brand pb-3 font-bold transition">По категориям</button>
-                            <button id="tab-over" onclick="switchTab('over')" class="text-gray-400 hover:text-gray-700 pb-3 border-b-2 border-transparent transition">Обзор</button>
+                            <button id="tab-over" onclick="switchTab('over')" class="text-brand border-b-2 border-brand pb-3 font-bold transition">Обзор</button>
+                            <button id="tab-cat" onclick="switchTab('cat')" class="text-gray-400 hover:text-gray-700 pb-3 border-b-2 border-transparent transition">По категориям</button>
                             <button id="tab-curr" onclick="switchTab('curr')" class="text-gray-400 hover:text-gray-700 pb-3 border-b-2 border-transparent transition">По валютам</button>
                         </div>
                         <div class="flex items-center space-x-3 pb-3">
-                            <select id="table-currency-filter" onchange="renderBudgetTable()" class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 outline-none bg-white font-medium">
+                            <select id="table-currency-filter" onchange="renderBudgetTable()" class="hidden text-sm border border-gray-200 rounded-lg px-3 py-1.5 outline-none bg-white font-medium">
                                 <option value="Br">BYN (Br)</option>
                                 <option value="₽">RUB (₽)</option>
                             </select>
@@ -183,7 +181,7 @@
                     <div id="budget-table-view" class="p-6 overflow-x-auto flex-1">
                         <div class="min-w-[650px]">
                             <div class="flex text-xs font-bold text-gray-400 uppercase tracking-wider px-2 pb-3 border-b border-gray-100 mb-3">
-                                <div class="flex-1">Категория</div>
+                                <div class="flex-1">Категория / Валюта</div>
                                 <div class="w-28 text-right">План</div>
                                 <div class="w-28 text-right">Потрачено</div>
                                 <div class="w-28 text-right">Осталось</div>
@@ -192,12 +190,6 @@
                             </div>
                             <div id="budget-list-container" class="space-y-3"></div>
                         </div>
-                    </div>
-
-                    <div id="budget-dev-view" class="hidden p-10 flex flex-col items-center justify-center text-gray-400 flex-1 bg-gray-50/50">
-                        <i class="ph ph-paint-brush-broad text-5xl mb-4 text-gray-300"></i>
-                        <p class="text-lg font-medium text-gray-600">Вкладка находится в разработке</p>
-                        <p class="text-sm mt-1">Скоро здесь появится расширенная аналитика.</p>
                     </div>
                 </div>
 
@@ -237,16 +229,16 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-fit">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="font-bold text-xl text-gray-900">Запланированные траты</h2>
                         <button onclick="openNewPaymentModal()" class="bg-brand-light text-brand hover:bg-brand hover:text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center"><i class="ph ph-plus mr-1"></i> Добавить</button>
                     </div>
-                    <div id="planned-payments-list" class="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[400px]">
+                    <div id="planned-payments-list" class="space-y-3 flex-1 pr-2">
                         </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-fit">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="font-bold text-xl text-gray-900">Календарь платежей</h3>
                         <span class="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full" id="calendar-month-title"></span>
@@ -254,7 +246,7 @@
                     <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-gray-400 mb-3 uppercase">
                         <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div class="text-red-400">Сб</div><div class="text-red-400">Вс</div>
                     </div>
-                    <div id="calendar-grid" class="grid grid-cols-7 gap-2 overflow-y-auto max-h-[400px] custom-scrollbar pr-1 pb-2">
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-2 pr-1 pb-2">
                         </div>
                 </div>
 
@@ -273,11 +265,19 @@
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Название категории</label>
-                    <input type="text" id="budget-cat" list="cat-list" required placeholder="Например: Еда, Машина, Снэки" class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none focus:border-brand">
+                    <input type="text" id="budget-cat" list="cat-list" required placeholder="Например: Продукты, Бензин, Аренда" class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none focus:border-brand">
                     <datalist id="cat-list">
-                        <option value="Основное"></option><option value="Еда"></option><option value="Машина"></option>
+                        <option value="Основное"></option><option value="Авто"></option><option value="Еда"></option>
                         <option value="Дом"></option><option value="Развлечения"></option><option value="Путешествия"></option>
-                        <option value="Работа"></option>
+                        <option value="Здоровье"></option><option value="Одежда"></option><option value="Транспорт"></option>
+                        <option value="Семья"></option><option value="Питомцы"></option>
+                        <option value="Бензин"></option><option value="Ремонт авто"></option><option value="Мойка"></option>
+                        <option value="Продукты"></option><option value="Кафе"></option><option value="Доставка еды"></option>
+                        <option value="Аренда"></option><option value="Коммуналка"></option><option value="Интернет"></option>
+                        <option value="Кино"></option><option value="Игры"></option><option value="Хобби"></option>
+                        <option value="Аптека"></option><option value="Врачи"></option><option value="Фитнес"></option>
+                        <option value="Такси"></option><option value="Общественный транспорт"></option>
+                        <option value="Корм"></option><option value="Ветклиника"></option>
                     </datalist>
                 </div>
                 
@@ -355,12 +355,13 @@
 
         let budgets = [], payments = [], transactions = [];
         let chartCurrency = 'Br';
+        let currentTab = 'over'; // По умолчанию "Обзор"
+        let globalOverspendHtml = ''; // Для накопления ошибок перерасхода
         
         const currentMonth = new Date().toISOString().substring(0, 7);
         const lastMonthDate = new Date(); lastMonthDate.setMonth(lastMonthDate.getMonth() - 1);
         const lastMonth = lastMonthDate.toISOString().substring(0, 7);
 
-        // Установка заголовков дат
         const monthName = new Date().toLocaleString('ru', { month: 'long', year: 'numeric' });
         document.getElementById('current-month-header').innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1);
         document.getElementById('calendar-month-title').innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1);
@@ -383,9 +384,10 @@
 
         function toggleDropdown(id) { document.getElementById(id).classList.toggle('hidden'); }
 
-        // ЛОГИКА ТАБОВ
+        // --- ЛОГИКА ВКЛАДОК ---
         function switchTab(tab) {
-            ['cat', 'over', 'curr'].forEach(t => {
+            currentTab = tab;
+            ['over', 'cat', 'curr'].forEach(t => {
                 const el = document.getElementById('tab-' + t);
                 if (t === tab) {
                     el.className = "text-brand border-b-2 border-brand pb-3 font-bold transition";
@@ -394,13 +396,12 @@
                 }
             });
             
-            if (tab === 'cat') {
-                document.getElementById('budget-table-view').classList.remove('hidden');
-                document.getElementById('budget-dev-view').classList.add('hidden');
-            } else {
-                document.getElementById('budget-table-view').classList.add('hidden');
-                document.getElementById('budget-dev-view').classList.remove('hidden');
-            }
+            // Фильтр валют показываем ТОЛЬКО во вкладке "По категориям"
+            const filter = document.getElementById('table-currency-filter');
+            if (tab === 'cat') filter.classList.remove('hidden');
+            else filter.classList.add('hidden');
+
+            renderBudgetTable();
         }
 
         async function initData() {
@@ -444,7 +445,6 @@
                 }
             });
 
-            // BYN
             document.getElementById('card-plan-byn').innerText = formatMoney(pByn) + ' Br'; 
             document.getElementById('card-spent-byn').innerText = formatMoney(sByn) + ' Br';
             let lByn = pByn - sByn;
@@ -454,7 +454,6 @@
             document.getElementById('card-save-byn').innerText = (svByn > 0 ? '+' : '') + formatMoney(svByn) + ' Br';
             document.getElementById('card-save-byn').className = `text-3xl font-bold ${svByn >= 0 ? 'text-emerald-500' : 'text-gray-400'}`;
 
-            // RUB
             document.getElementById('card-plan-rub').innerText = formatMoney(pRub) + ' ₽'; 
             document.getElementById('card-spent-rub').innerText = formatMoney(sRub) + ' ₽';
             let lRub = pRub - sRub;
@@ -467,27 +466,99 @@
 
         function getSpentForCategory(cat, curr) {
             let spent = 0;
-            transactions.forEach(t => { 
-                if(t.created_at.startsWith(currentMonth) && t.currency === curr && t.category === cat) spent += Number(t.amount); 
-            });
+            transactions.forEach(t => { if(t.created_at.startsWith(currentMonth) && t.currency === curr && t.category === cat) spent += Number(t.amount); });
             return spent;
         }
         function getSpentForSubCategory(subcat, curr) {
             let spent = 0;
-            transactions.forEach(t => { 
-                if(t.created_at.startsWith(currentMonth) && t.currency === curr && t.subcategory === subcat) spent += Number(t.amount); 
-            });
+            transactions.forEach(t => { if(t.created_at.startsWith(currentMonth) && t.currency === curr && t.subcategory === subcat) spent += Number(t.amount); });
             return spent;
         }
 
+        // --- ГЕНЕРАЦИЯ ТАБЛИЦЫ БЮДЖЕТОВ В ЗАВИСИМОСТИ ОТ ВКЛАДКИ ---
         function renderBudgetTable() {
             const container = document.getElementById('budget-list-container');
-            const curr = document.getElementById('table-currency-filter').value;
             let html = '';
-            let overspendHtml = '';
-
-            const parents = budgets.filter(b => !b.parent_id && b.currency === curr);
+            globalOverspendHtml = ''; // Сброс ошибок перед рендером
             
+            if (currentTab === 'over') {
+                // Обзор: выводим ВСЕ бюджеты списком, разделяя по валютам
+                ['Br', '₽'].forEach(curr => {
+                    const parents = budgets.filter(b => !b.parent_id && b.currency === curr);
+                    if (parents.length > 0) {
+                        html += `<div class="mt-4 mb-2 font-bold text-gray-400 uppercase text-xs tracking-wider border-b border-gray-100 pb-1 pl-2">Бюджеты в ${curr}</div>`;
+                        html += generateTreeHTML(parents, curr);
+                    }
+                });
+                if(!html) html = `<div class="text-center py-12 text-gray-400 font-medium bg-gray-50/50 rounded-xl border border-dashed border-gray-200">Нет добавленных лимитов</div>`;
+            } 
+            else if (currentTab === 'cat') {
+                // По категориям: выводим только для выбранной в фильтре валюты
+                const curr = document.getElementById('table-currency-filter').value;
+                const parents = budgets.filter(b => !b.parent_id && b.currency === curr);
+                html = generateTreeHTML(parents, curr);
+                if(!html) html = `<div class="text-center py-12 text-gray-400 font-medium bg-gray-50/50 rounded-xl border border-dashed border-gray-200">Нет добавленных лимитов в этой валюте</div>`;
+            }
+            else if (currentTab === 'curr') {
+                // По валютам: Выводим сводные бары по каждой валюте
+                html = generateCurrencyTotalsHTML();
+            }
+
+            container.innerHTML = html;
+
+            // Обработка виджета перерасхода
+            const ow = document.getElementById('overspend-widget');
+            if (globalOverspendHtml) {
+                ow.classList.remove('hidden');
+                document.getElementById('overspend-list').innerHTML = globalOverspendHtml;
+            } else {
+                ow.classList.add('hidden');
+            }
+        }
+
+        function generateCurrencyTotalsHTML() {
+            let html = '';
+            ['Br', '₽'].forEach(curr => {
+                let plan = 0, spent = 0;
+                budgets.filter(b => !b.parent_id && b.currency === curr).forEach(b => {
+                    plan += Number(b.planned_amount);
+                    spent += getSpentForCategory(b.category, curr);
+                });
+
+                if(plan > 0) {
+                    const left = plan - spent;
+                    const pctNum = (spent / plan) * 100;
+                    const pctStr = pctNum.toFixed(0) + '%';
+                    const pctBar = Math.min(pctNum, 100);
+                    const barColor = spent > plan ? 'bg-red-500' : 'bg-brand';
+                    const textColor = spent > plan ? 'text-red-600' : 'text-gray-900';
+
+                    html += `
+                    <div class="px-3 py-5 border-b border-gray-100 bg-white rounded-xl mb-4 shadow-sm border">
+                        <div class="flex items-center justify-between mb-3 pr-4">
+                            <span class="font-bold text-gray-900 text-lg flex items-center">
+                                ${curr === 'Br' ? '<i class="ph ph-currency-circle-dollar text-brand text-2xl mr-2"></i>' : '<i class="ph ph-currency-rub text-brand text-2xl mr-2"></i>'}
+                                Всего по ${curr}
+                            </span>
+                            <span class="font-bold text-lg ${textColor}">${pctStr} израсходовано</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden mb-4">
+                            <div class="${barColor} h-3 rounded-full transition-all duration-500" style="width: ${pctBar}%"></div>
+                        </div>
+                        <div class="flex justify-between text-sm font-medium">
+                            <div class="text-gray-500">План: <span class="text-gray-900">${formatMoney(plan)} ${curr}</span></div>
+                            <div class="text-gray-500">Траты: <span class="${textColor}">${formatMoney(spent)} ${curr}</span></div>
+                            <div class="text-gray-500">Остаток: <span class="${left < 0 ? 'text-red-500' : 'text-emerald-600'}">${formatMoney(left)} ${curr}</span></div>
+                        </div>
+                    </div>`;
+                }
+            });
+            if(!html) html = `<div class="text-center py-12 text-gray-400 font-medium bg-gray-50/50 rounded-xl border border-dashed border-gray-200">Нет данных по валютам</div>`;
+            return html;
+        }
+
+        function generateTreeHTML(parents, curr) {
+            let html = '';
             parents.forEach(p => {
                 const children = budgets.filter(b => b.parent_id === p.id);
                 const spent = getSpentForCategory(p.category, curr);
@@ -502,7 +573,7 @@
                 const iconClasses = getCategoryIcon(p.category);
 
                 if (spent > planned) {
-                    overspendHtml += `<p class="flex items-center"><i class="ph ph-arrow-circle-right mr-2"></i><b>${p.category}</b>: превышен на ${formatMoney(spent - planned)} ${curr}</p>`;
+                    globalOverspendHtml += `<p class="flex items-center"><i class="ph ph-arrow-circle-right mr-2"></i><b>${p.category}</b>: превышен на ${formatMoney(spent - planned)} ${curr}</p>`;
                 }
 
                 html += `
@@ -512,7 +583,7 @@
                             <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${iconClasses.split(' ').slice(1).join(' ')}">
                                 <i class="ph ${iconClasses.split(' ')[0]} text-xl"></i>
                             </div>
-                            <span class="font-bold text-gray-900 text-[15px]">${p.category}</span>
+                            <span class="font-bold text-gray-900 text-[15px]">${p.category} <span class="text-xs text-gray-400 font-normal ml-1">(${curr})</span></span>
                         </div>
                         <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden ml-[52px]" style="width: calc(100% - 52px);">
                             <div class="${barColor} h-2 rounded-full transition-all duration-500" style="width: ${pctBar}%"></div>
@@ -566,17 +637,7 @@
                     });
                 }
             });
-
-            if(!html) html = `<div class="text-center py-12 text-gray-400 font-medium bg-gray-50/50 rounded-xl border border-dashed border-gray-200">Нет добавленных лимитов в этой валюте</div>`;
-            container.innerHTML = html;
-
-            const ow = document.getElementById('overspend-widget');
-            if (overspendHtml) {
-                ow.classList.remove('hidden');
-                document.getElementById('overspend-list').innerHTML = overspendHtml;
-            } else {
-                ow.classList.add('hidden');
-            }
+            return html;
         }
 
         function renderPlannedPayments() {
@@ -729,11 +790,10 @@
             link.click();
         }
 
-        // --- Управление Модалкой Бюджетов ---
+        // --- Модалка Бюджетов ---
         function updateParentDropdown(forceCurrency = null) {
             const curr = forceCurrency || document.getElementById('budget-currency').value;
             const pSelect = document.getElementById('parent-budget');
-            // ОЧЕНЬ ВАЖНО: Фильтруем родителей только по выбранной в модалке валюте!
             const validParents = budgets.filter(b => !b.parent_id && b.currency === curr);
             
             if(validParents.length === 0) {
@@ -777,7 +837,6 @@
             try {
                 const id = document.getElementById('budget-id').value;
                 const isSub = document.getElementById('is-subbudget').checked;
-                // Строгая проверка на ID родителя, чтобы не отправить пустую строку в UUID поле
                 const rawParentId = document.getElementById('parent-budget').value;
                 const parentId = (isSub && rawParentId) ? rawParentId : null;
                 
