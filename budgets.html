@@ -27,7 +27,8 @@
         .donut-chart { border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; }
         .donut-inner { width: 70%; height: 70%; background-color: white; border-radius: 50%; position: absolute; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 
-        .action-btns { opacity: 0; transition: opacity 0.2s; }
+        /* Плавное появление кнопок редактирования */
+        .action-btns { opacity: 0; transition: opacity 0.2s ease-in-out; }
         .group:hover .action-btns { opacity: 1; }
     </style>
 </head>
@@ -56,31 +57,49 @@
                 </a>
             </nav>
         </div>
+        <div class="p-4 border-t border-gray-200 m-4 flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-xl transition">
+            <img src="https://ui-avatars.com/api/?name=User&background=random" alt="Avatar" class="w-10 h-10 rounded-full" />
+            <div class="flex-1">
+                <p class="text-sm font-semibold text-gray-900">Профиль</p>
+                <p class="text-xs text-gray-500">Настройки</p>
+            </div>
+        </div>
     </aside>
 
     <main class="flex-1 overflow-y-auto flex flex-col relative" id="main-scroll">
         <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Бюджеты</h1>
+                <h1 class="text-2xl font-bold text-gray-900">Бюджеты и Планирование</h1>
                 <p class="text-sm text-gray-500 mt-1" id="current-month-header">Текущий месяц</p>
             </div>
             <div class="flex items-center space-x-4">
-                <button onclick="openNewBudgetModal()" class="flex items-center space-x-2 bg-brand text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition shadow-sm">
-                    <i class="ph ph-plus"></i><span class="hidden sm:inline">Новый лимит</span>
+                <div class="relative">
+                    <button onclick="toggleDropdown('notif-dropdown')" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full relative transition">
+                        <i class="ph ph-bell text-xl"></i>
+                        <span id="notif-dot" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                    </button>
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                        <div class="px-4 py-3 border-b border-gray-100 font-bold text-gray-900">Уведомления</div>
+                        <div id="notif-list" class="max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <button onclick="exportToCSV()" class="flex items-center space-x-2 border border-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 transition shadow-sm">
+                    <i class="ph ph-download-simple"></i><span class="hidden sm:inline">Экспорт CSV</span>
                 </button>
             </div>
         </header>
 
-        <div class="p-8 flex-1 flex flex-col xl:flex-row gap-8">
+        <div class="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <div class="flex-1 min-w-0 flex flex-col space-y-8">
+            <div class="lg:col-span-2 space-y-8 min-w-0">
                 
                 <div class="space-y-4">
                     <div>
                         <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">Белорусские рубли (BYN)</h3>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                                <div><div class="text-xs font-medium text-gray-500 mb-1">План</div><div class="text-lg font-bold" id="card-plan-byn">0 Br</div></div>
+                                <div><div class="text-xs font-medium text-gray-500 mb-1">План на месяц</div><div class="text-lg font-bold" id="card-plan-byn">0 Br</div></div>
                                 <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-brand"><i class="ph ph-target text-lg"></i></div>
                             </div>
                             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
@@ -102,7 +121,7 @@
                         <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">Российские рубли (RUB)</h3>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                                <div><div class="text-xs font-medium text-gray-500 mb-1">План</div><div class="text-lg font-bold" id="card-plan-rub">0 ₽</div></div>
+                                <div><div class="text-xs font-medium text-gray-500 mb-1">План на месяц</div><div class="text-lg font-bold" id="card-plan-rub">0 ₽</div></div>
                                 <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-brand"><i class="ph ph-target text-lg"></i></div>
                             </div>
                             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
@@ -121,20 +140,23 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col flex-1">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">
                     <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
                         <div class="flex space-x-6 text-sm font-medium">
                             <button class="text-brand border-b-2 border-brand pb-1">По категориям</button>
                             <button class="text-gray-400 hover:text-gray-700 pb-1">Обзор</button>
                             <button class="text-gray-400 hover:text-gray-700 pb-1">По валютам</button>
                         </div>
-                        <select id="table-currency-filter" onchange="renderBudgetTable()" class="text-sm border border-gray-200 rounded-lg px-3 py-1 outline-none bg-white">
-                            <option value="Br">BYN (Br)</option>
-                            <option value="₽">RUB (₽)</option>
-                        </select>
+                        <div class="flex items-center space-x-3">
+                            <select id="table-currency-filter" onchange="renderBudgetTable()" class="text-sm border border-gray-200 rounded-lg px-3 py-1 outline-none bg-white">
+                                <option value="Br">BYN (Br)</option>
+                                <option value="₽">RUB (₽)</option>
+                            </select>
+                            <button onclick="openNewBudgetModal()" class="bg-brand text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-indigo-700 transition">+ Новый лимит</button>
+                        </div>
                     </div>
                     
-                    <div class="p-4 overflow-x-auto">
+                    <div class="p-4 overflow-x-auto min-h-[250px]">
                         <div class="min-w-[650px]">
                             <div class="flex text-xs font-bold text-gray-400 uppercase tracking-wider px-2 pb-3 border-b border-gray-100 mb-2">
                                 <div class="flex-1">Категория</div>
@@ -142,17 +164,25 @@
                                 <div class="w-24 text-right">Потрачено</div>
                                 <div class="w-24 text-right">Осталось</div>
                                 <div class="w-16 text-right">В %</div>
-                                <div class="w-12"></div> </div>
-                            
-                            <div id="budget-list-container" class="space-y-2">
-                                </div>
+                                <div class="w-16"></div> </div>
+                            <div id="budget-list-container" class="space-y-2"></div>
                         </div>
                     </div>
                 </div>
 
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="font-bold text-lg text-gray-900">Запланированные траты</h2>
+                        <button onclick="openNewPaymentModal()" class="text-brand hover:text-indigo-800 text-sm font-medium flex items-center"><i class="ph ph-plus mr-1"></i> Добавить платеж</button>
+                    </div>
+                    <div id="planned-payments-list" class="space-y-3">
+                        </div>
+                </div>
+
             </div>
 
-            <aside class="w-full xl:w-[350px] shrink-0 space-y-6">
+            <div class="lg:col-span-1 space-y-8">
+                
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="font-bold text-gray-900">Распределение</h3>
@@ -172,18 +202,30 @@
                     <div id="donut-legend" class="space-y-3 text-sm"></div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-gray-900 text-sm">Календарь платежей</h3>
-                        <button onclick="openNewPaymentModal()" class="text-brand hover:text-indigo-800 text-xs font-medium flex items-center"><i class="ph ph-plus mr-1"></i> Добавить</button>
+                <div id="overspend-widget" class="hidden bg-red-50 border border-red-100 p-5 rounded-2xl shadow-sm relative overflow-hidden">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                            <i class="ph ph-warning-circle text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-red-800">Внимание: Перерасход</h4>
+                            <div id="overspend-list" class="text-sm text-red-600 mt-1 space-y-1"></div>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 mb-2 uppercase">
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-900 text-lg" id="calendar-month-title">Календарь</h3>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-gray-400 mb-2 uppercase">
                         <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div class="text-red-400">Сб</div><div class="text-red-400">Вс</div>
                     </div>
-                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 overflow-y-auto max-h-[300px] pr-1">
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 overflow-y-auto max-h-[400px] custom-scrollbar pr-1 pb-2">
                         </div>
                 </div>
-            </aside>
+
+            </div>
         </div>
     </main>
 
@@ -191,7 +233,7 @@
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold" id="budget-modal-title">Новый лимит</h3>
-                <button onclick="closeModal('budget-modal')" class="text-gray-400 hover:text-gray-700"><i class="ph ph-x text-2xl"></i></button>
+                <button type="button" onclick="closeModal('budget-modal')" class="text-gray-400 hover:text-gray-700"><i class="ph ph-x text-2xl"></i></button>
             </div>
             <form onsubmit="saveBudget(event)" class="space-y-4">
                 <input type="hidden" id="budget-id">
@@ -200,8 +242,9 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Название категории</label>
                     <input type="text" id="budget-cat" list="cat-list" required placeholder="Например: Еда, Машина, Снэки" class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none focus:border-brand">
                     <datalist id="cat-list">
-                        <option value="Еда"></option><option value="Машина"></option><option value="Дом"></option>
-                        <option value="Развлечения"></option><option value="Путешествия"></option>
+                        <option value="Основное"></option><option value="Еда"></option><option value="Машина"></option>
+                        <option value="Дом"></option><option value="Развлечения"></option><option value="Путешествия"></option>
+                        <option value="Работа"></option>
                     </datalist>
                 </div>
                 
@@ -237,20 +280,35 @@
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold" id="payment-modal-title">Новый платеж</h3>
-                <button onclick="closeModal('payment-modal')" class="text-gray-400 hover:text-gray-700"><i class="ph ph-x text-2xl"></i></button>
+                <button type="button" onclick="closeModal('payment-modal')" class="text-gray-400 hover:text-gray-700"><i class="ph ph-x text-2xl"></i></button>
             </div>
             <form onsubmit="savePayment(event)" class="space-y-4">
                 <input type="hidden" id="pay-id">
-                <input type="text" id="pay-title" placeholder="Название (Аренда, Рассрочка)" required class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none">
-                <div class="flex space-x-4">
-                    <input type="number" id="pay-amount" placeholder="Сумма" required class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none">
-                    <select id="pay-currency" class="w-24 px-4 py-2 border border-gray-300 rounded-xl outline-none"><option value="Br">Br</option><option value="₽">₽</option></select>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Название платежа</label>
+                    <input type="text" id="pay-title" placeholder="Например: Аренда, Рассрочка" required class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none focus:border-brand">
                 </div>
                 <div class="flex space-x-4">
-                    <input type="date" id="pay-date" required class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none">
-                    <select id="pay-type" class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none"><option>Обычный</option><option>Долг/Рассрочка</option></select>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Сумма</label>
+                        <input type="number" id="pay-amount" placeholder="0.00" required class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none focus:border-brand">
+                    </div>
+                    <div class="w-24">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Валюта</label>
+                        <select id="pay-currency" class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none focus:border-brand"><option value="Br">Br</option><option value="₽">₽</option></select>
+                    </div>
                 </div>
-                <button type="submit" class="w-full bg-brand text-white py-3 rounded-xl">Сохранить</button>
+                <div class="flex space-x-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Дата списания</label>
+                        <input type="date" id="pay-date" required class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none focus:border-brand">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Тип платежа</label>
+                        <select id="pay-type" class="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none focus:border-brand"><option>Обычный</option><option>Долг/Рассрочка</option></select>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-brand text-white py-3 rounded-xl hover:bg-indigo-700 mt-2 transition">Сохранить</button>
             </form>
         </div>
     </div>
@@ -282,8 +340,11 @@
             if(name.includes('путешеств') || name.includes('отпуск')) return 'ph-airplane text-cyan-500 bg-cyan-100';
             if(name.includes('здоров') || name.includes('аптек') || name.includes('врач')) return 'ph-pill text-red-500 bg-red-100';
             if(name.includes('одежд') || name.includes('вещи')) return 'ph-t-shirt text-pink-500 bg-pink-100';
+            if(name.includes('работ') || name.includes('основн')) return 'ph-briefcase text-indigo-500 bg-indigo-100';
             return 'ph-wallet text-brand bg-brand-light';
         }
+
+        function toggleDropdown(id) { document.getElementById(id).classList.toggle('hidden'); }
 
         async function initData() {
             try {
@@ -300,7 +361,9 @@
                 calculateTopCards();
                 renderBudgetTable();
                 renderCalendar();
+                renderPlannedPayments();
                 renderDonutChart();
+                generateNotifications();
             } catch (error) {
                 console.error("Ошибка загрузки:", error);
             }
@@ -324,20 +387,22 @@
                 }
             });
 
-            // BYN Row
+            // BYN
             document.getElementById('card-plan-byn').innerText = formatMoney(pByn) + ' Br'; 
             document.getElementById('card-spent-byn').innerText = formatMoney(sByn) + ' Br';
             let lByn = pByn - sByn;
             document.getElementById('card-left-byn').innerText = formatMoney(lByn) + ' Br';
+            document.getElementById('card-left-byn').className = `text-lg font-bold ${lByn < 0 ? 'text-red-500' : 'text-brand'}`;
             let svByn = lsByn - sByn;
             document.getElementById('card-save-byn').innerText = (svByn > 0 ? '+' : '') + formatMoney(svByn) + ' Br';
             document.getElementById('card-save-byn').className = `text-lg font-bold ${svByn >= 0 ? 'text-emerald-500' : 'text-red-500'}`;
 
-            // RUB Row
+            // RUB
             document.getElementById('card-plan-rub').innerText = formatMoney(pRub) + ' ₽'; 
             document.getElementById('card-spent-rub').innerText = formatMoney(sRub) + ' ₽';
             let lRub = pRub - sRub;
             document.getElementById('card-left-rub').innerText = formatMoney(lRub) + ' ₽';
+            document.getElementById('card-left-rub').className = `text-lg font-bold ${lRub < 0 ? 'text-red-500' : 'text-brand'}`;
             let svRub = lsRub - sRub;
             document.getElementById('card-save-rub').innerText = (svRub > 0 ? '+' : '') + formatMoney(svRub) + ' ₽';
             document.getElementById('card-save-rub').className = `text-lg font-bold ${svRub >= 0 ? 'text-emerald-500' : 'text-red-500'}`;
@@ -345,7 +410,16 @@
 
         function getSpentForCategory(cat, curr) {
             let spent = 0;
-            transactions.forEach(t => { if(t.created_at.startsWith(currentMonth) && t.currency === curr && t.category === cat) spent += Number(t.amount); });
+            transactions.forEach(t => { 
+                if(t.created_at.startsWith(currentMonth) && t.currency === curr && t.category === cat) spent += Number(t.amount); 
+            });
+            return spent;
+        }
+        function getSpentForSubCategory(subcat, curr) {
+            let spent = 0;
+            transactions.forEach(t => { 
+                if(t.created_at.startsWith(currentMonth) && t.currency === curr && t.subcategory === subcat) spent += Number(t.amount); 
+            });
             return spent;
         }
 
@@ -353,6 +427,7 @@
             const container = document.getElementById('budget-list-container');
             const curr = document.getElementById('table-currency-filter').value;
             let html = '';
+            let overspendHtml = '';
 
             const parents = budgets.filter(b => !b.parent_id && b.currency === curr);
             
@@ -369,11 +444,14 @@
                 const textColor = spent > planned ? 'text-red-500' : 'text-gray-900';
                 const iconClasses = getCategoryIcon(p.category);
 
-                // Рендер родительской категории в стиле таблицы
+                if (spent > planned) {
+                    overspendHtml += `<p><b>${p.category}</b>: превышен на ${formatMoney(spent - planned)} ${curr}</p>`;
+                }
+
                 html += `
                 <div class="group flex items-center px-2 py-3 border-b border-gray-50 hover:bg-gray-50 transition rounded-lg relative">
                     <div class="flex-1 pr-6">
-                        <div class="flex items-center space-x-3 mb-2">
+                        <div class="flex items-center space-x-3 mb-1.5">
                             <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${iconClasses.split(' ').slice(1).join(' ')}">
                                 <i class="ph ${iconClasses.split(' ')[0]} text-lg"></i>
                             </div>
@@ -389,16 +467,15 @@
                     <div class="w-24 text-right text-sm font-medium ${left < 0 ? 'text-red-500' : 'text-gray-600'}">${formatMoney(left)}</div>
                     <div class="w-16 text-right text-sm font-bold ${textColor}">${pctStr}</div>
                     
-                    <div class="w-12 flex justify-end space-x-1 opacity-0 group-hover:opacity-100 transition pl-2">
-                        <button onclick="editBudget('${p.id}')" class="text-gray-400 hover:text-brand"><i class="ph ph-pencil-simple text-lg"></i></button>
-                        <button onclick="deleteBudget('${p.id}')" class="text-gray-400 hover:text-red-500"><i class="ph ph-trash text-lg"></i></button>
+                    <div class="w-16 flex justify-end space-x-1 action-btns pl-2">
+                        <button onclick="editBudget('${p.id}')" class="text-gray-400 hover:text-brand bg-white p-1 rounded shadow-sm border border-gray-100"><i class="ph ph-pencil-simple text-lg"></i></button>
+                        <button onclick="deleteBudget('${p.id}')" class="text-gray-400 hover:text-red-500 bg-white p-1 rounded shadow-sm border border-gray-100"><i class="ph ph-trash text-lg"></i></button>
                     </div>
                 </div>`;
 
-                // Подкатегории
                 if(children.length > 0) {
                     children.forEach(c => {
-                        const cSpent = getSpentForCategory(c.category, curr);
+                        const cSpent = getSpentForSubCategory(c.category, curr);
                         const cPlanned = Number(c.planned_amount);
                         const cLeft = cPlanned - cSpent;
                         const cPctNum = cPlanned > 0 ? (cSpent / cPlanned) * 100 : 0;
@@ -424,9 +501,9 @@
                             <div class="w-24 text-right text-xs ${cLeft < 0 ? 'text-red-500' : 'text-gray-500'}">${formatMoney(cLeft)}</div>
                             <div class="w-16 text-right text-xs font-medium ${cTextColor}">${cPctStr}</div>
                             
-                            <div class="w-12 flex justify-end space-x-1 opacity-0 group-hover:opacity-100 transition pl-2">
-                                <button onclick="editBudget('${c.id}')" class="text-gray-400 hover:text-brand"><i class="ph ph-pencil-simple"></i></button>
-                                <button onclick="deleteBudget('${c.id}')" class="text-gray-400 hover:text-red-500"><i class="ph ph-trash"></i></button>
+                            <div class="w-16 flex justify-end space-x-1 action-btns pl-2">
+                                <button onclick="editBudget('${c.id}')" class="text-gray-400 hover:text-brand bg-white p-1 rounded shadow-sm border border-gray-100"><i class="ph ph-pencil-simple"></i></button>
+                                <button onclick="deleteBudget('${c.id}')" class="text-gray-400 hover:text-red-500 bg-white p-1 rounded shadow-sm border border-gray-100"><i class="ph ph-trash"></i></button>
                             </div>
                         </div>`;
                     });
@@ -435,6 +512,47 @@
 
             if(!html) html = `<div class="text-center py-10 text-gray-400">Нет планов в выбранной валюте</div>`;
             container.innerHTML = html;
+
+            // Виджет перерасхода
+            const ow = document.getElementById('overspend-widget');
+            if (overspendHtml) {
+                ow.classList.remove('hidden');
+                document.getElementById('overspend-list').innerHTML = overspendHtml;
+            } else {
+                ow.classList.add('hidden');
+            }
+        }
+
+        // --- Список Запланированных Трат (слева внизу) ---
+        function renderPlannedPayments() {
+            const list = document.getElementById('planned-payments-list');
+            let html = '';
+            
+            payments.forEach(p => {
+                let isPaidClass = p.is_paid ? 'opacity-50 line-through' : '';
+                let icon = p.payment_type.includes('Долг') ? 'ph-hand-coins text-red-500 bg-red-50' : 'ph-calendar text-brand bg-indigo-50';
+
+                html += `
+                <div class="group flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:shadow-sm transition bg-white relative ${isPaidClass}">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${icon}"><i class="ph ${icon.split(' ')[0]} text-lg"></i></div>
+                        <div>
+                            <p class="font-semibold text-gray-900 text-sm">${p.title}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">${new Date(p.due_date).toLocaleDateString('ru-RU', {day:'2-digit', month:'short', year:'numeric'})}</p>
+                        </div>
+                    </div>
+                    <div class="text-right pr-2">
+                        <span class="font-bold text-gray-900">${formatMoney(p.amount)} ${p.currency}</span>
+                    </div>
+                    
+                    <div class="action-btns absolute right-2 top-1/2 -translate-y-1/2 flex space-x-1 bg-white p-1 rounded-lg shadow-sm border border-gray-100">
+                        <button onclick="editPayment('${p.id}')" class="text-gray-400 hover:text-brand p-1"><i class="ph ph-pencil-simple"></i></button>
+                        <button onclick="deletePayment('${p.id}')" class="text-gray-400 hover:text-red-500 p-1"><i class="ph ph-trash"></i></button>
+                    </div>
+                </div>`;
+            });
+
+            list.innerHTML = html || '<div class="text-center py-6 text-gray-400 text-sm">Нет запланированных платежей</div>';
         }
 
         // --- Календарь ---
@@ -455,20 +573,21 @@
                 let payBadges = '';
                 dayPays.forEach(p => {
                     let isDebt = p.payment_type.includes('Долг') || p.payment_type.includes('Рассрочка');
-                    payBadges += `<div onclick="editPayment('${p.id}')" class="text-[9px] ${isDebt ? 'bg-red-500' : 'bg-brand'} text-white px-1 py-0.5 rounded mt-0.5 truncate w-full shadow-sm cursor-pointer hover:opacity-80" title="${p.title}">${p.title}</div>`;
+                    payBadges += `<div onclick="editPayment('${p.id}')" class="text-[10px] ${isDebt ? 'bg-red-500' : 'bg-brand'} text-white px-1.5 py-0.5 rounded mt-1 truncate w-full shadow-sm cursor-pointer hover:opacity-80" title="${p.title}: ${p.amount} ${p.currency}">${p.title}</div>`;
                 });
 
-                let isToday = day === now.getDate() ? 'bg-indigo-50 border-brand text-brand font-bold' : 'border-gray-100 hover:bg-gray-50';
+                let isToday = day === now.getDate() ? 'bg-indigo-50 border-brand text-brand font-bold shadow-sm' : 'border-gray-100 hover:bg-gray-50';
                 
                 html += `
-                <div class="border rounded-lg p-1 flex flex-col items-end justify-start min-h-[50px] transition ${isToday}">
-                    <span class="text-[10px] mr-0.5">${day}</span>
+                <div class="border rounded-xl p-1.5 flex flex-col items-end justify-start min-h-[70px] transition ${isToday}">
+                    <span class="text-xs mr-0.5">${day}</span>
                     <div class="w-full flex flex-col items-center mt-0.5">${payBadges}</div>
                 </div>`;
             }
             grid.innerHTML = html;
         }
 
+        // --- Пончик ---
         function setChartCurrency(curr) {
             chartCurrency = curr;
             document.getElementById('btn-chart-br').className = curr === 'Br' ? 'px-3 py-1 text-xs font-bold rounded bg-white shadow-sm' : 'px-3 py-1 text-xs font-bold rounded text-gray-500 hover:bg-white hover:shadow-sm';
@@ -506,7 +625,59 @@
             document.getElementById('donut-legend').innerHTML = legendHtml;
         }
 
-        // --- Управление Модалками ---
+        // --- Уведомления ---
+        function generateNotifications() {
+            const list = document.getElementById('notif-list');
+            const dot = document.getElementById('notif-dot');
+            let notifs = [];
+            const today = new Date(); today.setHours(0,0,0,0);
+
+            payments.filter(p => !p.is_paid).forEach(p => {
+                const diff = Math.ceil((new Date(p.due_date) - today) / (1000 * 60 * 60 * 24));
+                if (diff >= 0 && diff <= 3) {
+                    notifs.push({ icon: 'ph-calendar-warning text-orange-500', text: `Скоро платеж: <b>${p.title}</b> (${formatMoney(p.amount)} ${p.currency}) через ${diff} дн.` });
+                }
+            });
+
+            budgets.filter(b => !b.parent_id).forEach(b => {
+                let spent = getSpentForCategory(b.category, b.currency);
+                let pct = spent / b.planned_amount;
+                if (pct >= 0.85 && pct < 1) {
+                    notifs.push({ icon: 'ph-warning text-yellow-500', text: `Лимит <b>${b.category}</b> израсходован на ${(pct*100).toFixed(0)}%` });
+                } else if (pct >= 1) {
+                    notifs.push({ icon: 'ph-warning-circle text-red-500', text: `Лимит <b>${b.category}</b> превышен!` });
+                }
+            });
+
+            if (notifs.length > 0) {
+                dot.classList.remove('hidden');
+                list.innerHTML = notifs.map(n => `
+                    <div class="px-4 py-3 border-b border-gray-50 flex items-start space-x-3 hover:bg-gray-50 transition cursor-pointer">
+                        <i class="ph ${n.icon} text-lg mt-0.5"></i><p class="text-sm text-gray-700 leading-tight">${n.text}</p>
+                    </div>`).join('');
+            } else {
+                dot.classList.add('hidden');
+                list.innerHTML = '<div class="px-4 py-6 text-center text-gray-400 text-sm">Нет новых уведомлений.</div>';
+            }
+        }
+
+        // --- Экспорт ---
+        function exportToCSV() {
+            let csv = 'Категория,Валюта,План,Потрачено,Остаток,Процент\n';
+            budgets.forEach(b => {
+                let spent = b.parent_id ? getSpentForSubCategory(b.category, b.currency) : getSpentForCategory(b.category, b.currency);
+                let pct = ((spent / b.planned_amount) * 100).toFixed(1);
+                let left = b.planned_amount - spent;
+                csv += `${b.category},${b.currency},${b.planned_amount},${spent},${left},${pct}%\n`;
+            });
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `budgets_${currentMonth}.csv`;
+            link.click();
+        }
+
+        // --- Управление Модалками (Бюджеты) ---
         function openNewBudgetModal() {
             document.getElementById('budget-id').value = '';
             document.getElementById('budget-cat').value = '';
@@ -521,20 +692,12 @@
             document.getElementById('budget-modal').classList.remove('hidden'); document.getElementById('budget-modal').classList.add('flex');
         }
 
-        function openNewPaymentModal() { 
-            document.getElementById('pay-id').value = '';
-            document.getElementById('pay-title').value = '';
-            document.getElementById('pay-amount').value = '';
-            document.getElementById('payment-modal-title').innerText = 'Новый платеж';
-            document.getElementById('payment-modal').classList.remove('hidden'); document.getElementById('payment-modal').classList.add('flex'); 
-        }
-        
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
-        
         function toggleSubBudget() {
             const isSub = document.getElementById('is-subbudget').checked;
             document.getElementById('parent-budget-container').style.display = isSub ? 'block' : 'none';
         }
+
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); document.getElementById(id).classList.remove('flex'); }
 
         async function saveBudget(e) {
             e.preventDefault();
@@ -575,6 +738,15 @@
                 await supabaseClient.from('budgets').delete().eq('id', id);
                 initData();
             }
+        }
+
+        // --- Управление Модалками (Платежи) ---
+        function openNewPaymentModal() { 
+            document.getElementById('pay-id').value = '';
+            document.getElementById('pay-title').value = '';
+            document.getElementById('pay-amount').value = '';
+            document.getElementById('payment-modal-title').innerText = 'Новый платеж';
+            document.getElementById('payment-modal').classList.remove('hidden'); document.getElementById('payment-modal').classList.add('flex'); 
         }
 
         async function savePayment(e) {
