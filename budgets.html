@@ -27,7 +27,6 @@
         .donut-chart { border-radius: 50%; display: flex; justify-content: center; align-items: center; position: relative; }
         .donut-inner { width: 70%; height: 70%; background-color: white; border-radius: 50%; position: absolute; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 
-        /* Плавное появление кнопок редактирования */
         .action-btns { opacity: 0; transition: opacity 0.2s; }
         .group:hover .action-btns { opacity: 1; }
     </style>
@@ -74,33 +73,56 @@
 
         <div class="p-8 flex-1 flex flex-col xl:flex-row gap-8">
             
-            <div class="flex-1 min-w-0 space-y-8">
+            <div class="flex-1 min-w-0 flex flex-col space-y-8">
                 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                        <div class="text-sm font-medium text-gray-500 mb-2">План на месяц</div>
-                        <div class="text-xl font-bold" id="card-plan-byn">0 Br</div>
-                        <div class="text-xs text-gray-400 mt-1" id="card-plan-rub">0 ₽</div>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">Белорусские рубли (BYN)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div><div class="text-xs font-medium text-gray-500 mb-1">План</div><div class="text-lg font-bold" id="card-plan-byn">0 Br</div></div>
+                                <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-brand"><i class="ph ph-target text-lg"></i></div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div><div class="text-xs font-medium text-gray-500 mb-1">Потрачено</div><div class="text-lg font-bold" id="card-spent-byn">0 Br</div></div>
+                                <div class="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500"><i class="ph ph-shopping-cart text-lg"></i></div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div><div class="text-xs font-medium text-gray-500 mb-1">Осталось</div><div class="text-lg font-bold text-brand" id="card-left-byn">0 Br</div></div>
+                                <div class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500"><i class="ph ph-wallet text-lg"></i></div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div><div class="text-xs font-medium text-gray-500 mb-1">Экономия</div><div class="text-lg font-bold" id="card-save-byn">0 Br</div></div>
+                                <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500"><i class="ph ph-piggy-bank text-lg"></i></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                        <div class="text-sm font-medium text-gray-500 mb-2">Потрачено</div>
-                        <div class="text-xl font-bold" id="card-spent-byn">0 Br</div>
-                        <div class="text-xs text-gray-400 mt-1" id="card-spent-rub">0 ₽</div>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                        <div class="text-sm font-medium text-gray-500 mb-2">Осталось</div>
-                        <div class="text-xl font-bold text-brand" id="card-left-byn">0 Br</div>
-                        <div class="text-xs text-indigo-300 mt-1" id="card-left-rub">0 ₽</div>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                        <div class="text-sm font-medium text-gray-500 mb-2">Экономия</div>
-                        <div class="text-xl font-bold" id="card-save-byn">0 Br</div>
-                        <div class="text-xs mt-1" id="card-save-rub">0 ₽</div>
+                    
+                    <div>
+                        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">Российские рубли (RUB)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div><div class="text-xs font-medium text-gray-500 mb-1">План</div><div class="text-lg font-bold" id="card-plan-rub">0 ₽</div></div>
+                                <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-brand"><i class="ph ph-target text-lg"></i></div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div><div class="text-xs font-medium text-gray-500 mb-1">Потрачено</div><div class="text-lg font-bold" id="card-spent-rub">0 ₽</div></div>
+                                <div class="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-500"><i class="ph ph-shopping-cart text-lg"></i></div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div><div class="text-xs font-medium text-gray-500 mb-1">Осталось</div><div class="text-lg font-bold text-brand" id="card-left-rub">0 ₽</div></div>
+                                <div class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500"><i class="ph ph-wallet text-lg"></i></div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                                <div><div class="text-xs font-medium text-gray-500 mb-1">Экономия</div><div class="text-lg font-bold" id="card-save-rub">0 ₽</div></div>
+                                <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500"><i class="ph ph-piggy-bank text-lg"></i></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col flex-1">
+                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
                         <div class="flex space-x-6 text-sm font-medium">
                             <button class="text-brand border-b-2 border-brand pb-1">По категориям</button>
                             <button class="text-gray-400 hover:text-gray-700 pb-1">Обзор</button>
@@ -111,20 +133,21 @@
                             <option value="₽">RUB (₽)</option>
                         </select>
                     </div>
-                    <div class="p-4 space-y-4" id="budget-list-container">
+                    
+                    <div class="p-4 overflow-x-auto">
+                        <div class="min-w-[650px]">
+                            <div class="flex text-xs font-bold text-gray-400 uppercase tracking-wider px-2 pb-3 border-b border-gray-100 mb-2">
+                                <div class="flex-1">Категория</div>
+                                <div class="w-24 text-right">План</div>
+                                <div class="w-24 text-right">Потрачено</div>
+                                <div class="w-24 text-right">Осталось</div>
+                                <div class="w-16 text-right">В %</div>
+                                <div class="w-12"></div> </div>
+                            
+                            <div id="budget-list-container" class="space-y-2">
+                                </div>
                         </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-gray-900" id="calendar-month-title">Календарь платежей</h3>
-                        <button onclick="openNewPaymentModal()" class="text-brand hover:text-indigo-800 text-sm font-medium"><i class="ph ph-plus"></i> Добавить</button>
                     </div>
-                    <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-gray-400 mb-2 uppercase">
-                        <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div class="text-red-400">Сб</div><div class="text-red-400">Вс</div>
-                    </div>
-                    <div id="calendar-grid" class="grid grid-cols-7 gap-2 overflow-y-auto max-h-[500px] pr-1">
-                        </div>
                 </div>
 
             </div>
@@ -149,9 +172,15 @@
                     <div id="donut-legend" class="space-y-3 text-sm"></div>
                 </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[400px]">
-                    <h3 class="font-bold text-gray-900 uppercase tracking-wider text-sm mb-4">Ближайшие списания</h3>
-                    <div id="upcoming-payments-container" class="space-y-3 overflow-y-auto pr-2 flex-1">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-900 text-sm">Календарь платежей</h3>
+                        <button onclick="openNewPaymentModal()" class="text-brand hover:text-indigo-800 text-xs font-medium flex items-center"><i class="ph ph-plus mr-1"></i> Добавить</button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 mb-2 uppercase">
+                        <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div class="text-red-400">Сб</div><div class="text-red-400">Вс</div>
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 overflow-y-auto max-h-[300px] pr-1">
                         </div>
                 </div>
             </aside>
@@ -238,21 +267,21 @@
         const lastMonthDate = new Date(); lastMonthDate.setMonth(lastMonthDate.getMonth() - 1);
         const lastMonth = lastMonthDate.toISOString().substring(0, 7);
 
-        document.getElementById('calendar-month-title').innerText = new Date().toLocaleString('ru', { month: 'long', year: 'numeric' });
+        document.getElementById('current-month-header').innerText = new Date().toLocaleString('ru', { month: 'long', year: 'numeric' });
 
-        const formatMoney = (amount, curr) => Number(amount).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' ' + curr;
+        const formatMoney = (amount) => Number(amount).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
         const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#64748b'];
 
-        // Подбор иконки по ключевому слову
         function getCategoryIcon(catName) {
             const name = catName.toLowerCase();
-            if(name.includes('ед') || name.includes('продукт') || name.includes('снэк')) return 'ph-hamburger text-orange-500 bg-orange-100';
-            if(name.includes('авто') || name.includes('машин') || name.includes('бенз')) return 'ph-car text-blue-500 bg-blue-100';
-            if(name.includes('дом') || name.includes('квартир') || name.includes('аренд')) return 'ph-house text-emerald-500 bg-emerald-100';
-            if(name.includes('развлеч') || name.includes('игр')) return 'ph-game-controller text-purple-500 bg-purple-100';
+            if(name.includes('ед') || name.includes('продукт') || name.includes('снэк') || name.includes('кафе')) return 'ph-hamburger text-orange-500 bg-orange-100';
+            if(name.includes('авто') || name.includes('машин') || name.includes('бенз') || name.includes('транспорт')) return 'ph-car text-blue-500 bg-blue-100';
+            if(name.includes('дом') || name.includes('квартир') || name.includes('аренд') || name.includes('жкх')) return 'ph-house text-emerald-500 bg-emerald-100';
+            if(name.includes('развлеч') || name.includes('игр') || name.includes('кино')) return 'ph-game-controller text-purple-500 bg-purple-100';
             if(name.includes('путешеств') || name.includes('отпуск')) return 'ph-airplane text-cyan-500 bg-cyan-100';
-            if(name.includes('здоров') || name.includes('аптек')) return 'ph-pill text-red-500 bg-red-100';
+            if(name.includes('здоров') || name.includes('аптек') || name.includes('врач')) return 'ph-pill text-red-500 bg-red-100';
+            if(name.includes('одежд') || name.includes('вещи')) return 'ph-t-shirt text-pink-500 bg-pink-100';
             return 'ph-wallet text-brand bg-brand-light';
         }
 
@@ -271,7 +300,6 @@
                 calculateTopCards();
                 renderBudgetTable();
                 renderCalendar();
-                renderPayments();
                 renderDonutChart();
             } catch (error) {
                 console.error("Ошибка загрузки:", error);
@@ -296,17 +324,23 @@
                 }
             });
 
-            document.getElementById('card-plan-byn').innerText = formatMoney(pByn, 'Br'); document.getElementById('card-plan-rub').innerText = formatMoney(pRub, '₽');
-            document.getElementById('card-spent-byn').innerText = formatMoney(sByn, 'Br'); document.getElementById('card-spent-rub').innerText = formatMoney(sRub, '₽');
-            
-            let lByn = pByn - sByn, lRub = pRub - sRub;
-            document.getElementById('card-left-byn').innerText = formatMoney(lByn, 'Br'); document.getElementById('card-left-rub').innerText = formatMoney(lRub, '₽');
-            
-            let svByn = lsByn - sByn, svRub = lsRub - sRub;
-            document.getElementById('card-save-byn').innerText = (svByn >= 0 ? '+' : '') + formatMoney(svByn, 'Br');
-            document.getElementById('card-save-byn').className = `text-xl font-bold ${svByn >= 0 ? 'text-emerald-500' : 'text-red-500'}`;
-            document.getElementById('card-save-rub').innerText = (svRub >= 0 ? '+' : '') + formatMoney(svRub, '₽');
-            document.getElementById('card-save-rub').className = `text-xs mt-1 ${svRub >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            // BYN Row
+            document.getElementById('card-plan-byn').innerText = formatMoney(pByn) + ' Br'; 
+            document.getElementById('card-spent-byn').innerText = formatMoney(sByn) + ' Br';
+            let lByn = pByn - sByn;
+            document.getElementById('card-left-byn').innerText = formatMoney(lByn) + ' Br';
+            let svByn = lsByn - sByn;
+            document.getElementById('card-save-byn').innerText = (svByn > 0 ? '+' : '') + formatMoney(svByn) + ' Br';
+            document.getElementById('card-save-byn').className = `text-lg font-bold ${svByn >= 0 ? 'text-emerald-500' : 'text-red-500'}`;
+
+            // RUB Row
+            document.getElementById('card-plan-rub').innerText = formatMoney(pRub) + ' ₽'; 
+            document.getElementById('card-spent-rub').innerText = formatMoney(sRub) + ' ₽';
+            let lRub = pRub - sRub;
+            document.getElementById('card-left-rub').innerText = formatMoney(lRub) + ' ₽';
+            let svRub = lsRub - sRub;
+            document.getElementById('card-save-rub').innerText = (svRub > 0 ? '+' : '') + formatMoney(svRub) + ' ₽';
+            document.getElementById('card-save-rub').className = `text-lg font-bold ${svRub >= 0 ? 'text-emerald-500' : 'text-red-500'}`;
         }
 
         function getSpentForCategory(cat, curr) {
@@ -325,68 +359,85 @@
             parents.forEach(p => {
                 const children = budgets.filter(b => b.parent_id === p.id);
                 const spent = getSpentForCategory(p.category, curr);
-                const pct = Math.min((spent / p.planned_amount) * 100, 100).toFixed(0);
-                const barColor = spent > p.planned_amount ? 'bg-red-500' : 'bg-brand';
+                const planned = Number(p.planned_amount);
+                const left = planned - spent;
+                const pctNum = planned > 0 ? (spent / planned) * 100 : 0;
+                const pctStr = pctNum.toFixed(0) + '%';
+                const pctBar = Math.min(pctNum, 100);
+                
+                const barColor = spent > planned ? 'bg-red-500' : 'bg-brand';
+                const textColor = spent > planned ? 'text-red-500' : 'text-gray-900';
                 const iconClasses = getCategoryIcon(p.category);
 
+                // Рендер родительской категории в стиле таблицы
                 html += `
-                <div class="group border border-gray-100 rounded-2xl p-4 hover:shadow-md transition bg-white relative">
-                    
-                    <div class="action-btns absolute top-4 right-4 flex space-x-2 bg-white px-2 rounded-lg shadow-sm border border-gray-100 z-10">
-                        <button onclick="editBudget('${p.id}')" class="text-gray-400 hover:text-brand p-1"><i class="ph ph-pencil-simple text-lg"></i></button>
-                        <button onclick="deleteBudget('${p.id}')" class="text-gray-400 hover:text-red-500 p-1"><i class="ph ph-trash text-lg"></i></button>
-                    </div>
-
-                    <div class="flex items-center justify-between mb-3 pr-16">
-                        <div class="flex items-center space-x-4 flex-1">
-                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${iconClasses.split(' ').slice(1).join(' ')}">
-                                <i class="ph ${iconClasses.split(' ')[0]} text-2xl"></i>
+                <div class="group flex items-center px-2 py-3 border-b border-gray-50 hover:bg-gray-50 transition rounded-lg relative">
+                    <div class="flex-1 pr-6">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${iconClasses.split(' ').slice(1).join(' ')}">
+                                <i class="ph ${iconClasses.split(' ')[0]} text-lg"></i>
                             </div>
-                            <div class="flex-1">
-                                <div class="flex justify-between items-baseline mb-1">
-                                    <h4 class="font-bold text-gray-900 text-lg">${p.category}</h4>
-                                    <span class="text-sm font-medium ${spent > p.planned_amount ? 'text-red-500' : 'text-gray-500'}">
-                                        ${formatMoney(spent, curr)} / ${formatMoney(p.planned_amount, curr)}
-                                    </span>
-                                </div>
-                                <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden flex">
-                                    <div class="${barColor} h-2.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
-                                </div>
-                            </div>
+                            <span class="font-bold text-gray-900">${p.category}</span>
                         </div>
-                    </div>`;
+                        <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden ml-11" style="width: calc(100% - 2.75rem);">
+                            <div class="${barColor} h-1.5 rounded-full transition-all duration-500" style="width: ${pctBar}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="w-24 text-right text-sm font-medium text-gray-600">${formatMoney(planned)}</div>
+                    <div class="w-24 text-right text-sm font-medium ${textColor}">${formatMoney(spent)}</div>
+                    <div class="w-24 text-right text-sm font-medium ${left < 0 ? 'text-red-500' : 'text-gray-600'}">${formatMoney(left)}</div>
+                    <div class="w-16 text-right text-sm font-bold ${textColor}">${pctStr}</div>
+                    
+                    <div class="w-12 flex justify-end space-x-1 opacity-0 group-hover:opacity-100 transition pl-2">
+                        <button onclick="editBudget('${p.id}')" class="text-gray-400 hover:text-brand"><i class="ph ph-pencil-simple text-lg"></i></button>
+                        <button onclick="deleteBudget('${p.id}')" class="text-gray-400 hover:text-red-500"><i class="ph ph-trash text-lg"></i></button>
+                    </div>
+                </div>`;
 
                 // Подкатегории
                 if(children.length > 0) {
-                    html += `<div class="mt-4 pt-3 border-t border-gray-50 space-y-3 pl-16">`;
                     children.forEach(c => {
                         const cSpent = getSpentForCategory(c.category, curr);
-                        const cPct = Math.min((cSpent / c.planned_amount) * 100, 100).toFixed(0);
+                        const cPlanned = Number(c.planned_amount);
+                        const cLeft = cPlanned - cSpent;
+                        const cPctNum = cPlanned > 0 ? (cSpent / cPlanned) * 100 : 0;
+                        const cPctStr = cPctNum.toFixed(0) + '%';
+                        const cPctBar = Math.min(cPctNum, 100);
+                        const cBarColor = cSpent > cPlanned ? 'bg-red-400' : 'bg-blue-300';
+                        const cTextColor = cSpent > cPlanned ? 'text-red-500' : 'text-gray-600';
+
                         html += `
-                        <div class="group/sub flex items-center justify-between relative">
-                            <div class="flex-1 pr-12">
-                                <div class="flex justify-between items-baseline text-sm mb-1">
-                                    <span class="text-gray-600 flex items-center"><div class="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2"></div>${c.category}</span>
-                                    <span class="text-gray-500">${formatMoney(cSpent, curr)} / ${formatMoney(c.planned_amount, curr)}</span>
+                        <div class="group flex items-center px-2 py-2 border-b border-gray-50 hover:bg-gray-50 transition rounded-lg relative bg-white">
+                            <div class="flex-1 pr-6 pl-11">
+                                <div class="flex items-center space-x-2 mb-1.5">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                                    <span class="text-sm text-gray-600">${c.category}</span>
                                 </div>
-                                <div class="w-full bg-gray-50 rounded-full h-1.5"><div class="bg-blue-300 h-1.5 rounded-full" style="width: ${cPct}%"></div></div>
+                                <div class="w-full bg-gray-50 rounded-full h-1 ml-3.5" style="width: calc(100% - 0.875rem);">
+                                    <div class="${cBarColor} h-1 rounded-full transition-all duration-500" style="width: ${cPctBar}%"></div>
+                                </div>
                             </div>
-                            <div class="absolute right-0 flex space-x-1 opacity-0 group-hover/sub:opacity-100 transition">
+                            
+                            <div class="w-24 text-right text-xs text-gray-500">${formatMoney(cPlanned)}</div>
+                            <div class="w-24 text-right text-xs ${cTextColor}">${formatMoney(cSpent)}</div>
+                            <div class="w-24 text-right text-xs ${cLeft < 0 ? 'text-red-500' : 'text-gray-500'}">${formatMoney(cLeft)}</div>
+                            <div class="w-16 text-right text-xs font-medium ${cTextColor}">${cPctStr}</div>
+                            
+                            <div class="w-12 flex justify-end space-x-1 opacity-0 group-hover:opacity-100 transition pl-2">
                                 <button onclick="editBudget('${c.id}')" class="text-gray-400 hover:text-brand"><i class="ph ph-pencil-simple"></i></button>
                                 <button onclick="deleteBudget('${c.id}')" class="text-gray-400 hover:text-red-500"><i class="ph ph-trash"></i></button>
                             </div>
                         </div>`;
                     });
-                    html += `</div>`;
                 }
-                html += `</div>`;
             });
 
             if(!html) html = `<div class="text-center py-10 text-gray-400">Нет планов в выбранной валюте</div>`;
             container.innerHTML = html;
         }
 
-        // --- Календарь и Платежи ---
+        // --- Календарь ---
         function renderCalendar() {
             const grid = document.getElementById('calendar-grid');
             const now = new Date();
@@ -395,7 +446,7 @@
             let startOffset = firstDay === 0 ? 6 : firstDay - 1;
             
             let html = '';
-            for(let i = 0; i < startOffset; i++) html += `<div class="p-2 border border-transparent"></div>`;
+            for(let i = 0; i < startOffset; i++) html += `<div class="p-1 border border-transparent"></div>`;
             
             for(let day = 1; day <= daysInMonth; day++) {
                 let dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
@@ -404,51 +455,18 @@
                 let payBadges = '';
                 dayPays.forEach(p => {
                     let isDebt = p.payment_type.includes('Долг') || p.payment_type.includes('Рассрочка');
-                    payBadges += `<div onclick="editPayment('${p.id}')" class="text-[10px] ${isDebt ? 'bg-red-500' : 'bg-brand'} text-white px-1 py-0.5 rounded mt-1 truncate w-full shadow-sm cursor-pointer hover:opacity-80" title="${p.title}">${p.title}</div>`;
+                    payBadges += `<div onclick="editPayment('${p.id}')" class="text-[9px] ${isDebt ? 'bg-red-500' : 'bg-brand'} text-white px-1 py-0.5 rounded mt-0.5 truncate w-full shadow-sm cursor-pointer hover:opacity-80" title="${p.title}">${p.title}</div>`;
                 });
 
                 let isToday = day === now.getDate() ? 'bg-indigo-50 border-brand text-brand font-bold' : 'border-gray-100 hover:bg-gray-50';
                 
                 html += `
-                <div class="border rounded-xl p-1.5 flex flex-col items-end justify-start min-h-[80px] transition ${isToday}">
-                    <span class="text-xs mr-1">${day}</span>
-                    <div class="w-full flex flex-col items-center mt-1 space-y-1">${payBadges}</div>
+                <div class="border rounded-lg p-1 flex flex-col items-end justify-start min-h-[50px] transition ${isToday}">
+                    <span class="text-[10px] mr-0.5">${day}</span>
+                    <div class="w-full flex flex-col items-center mt-0.5">${payBadges}</div>
                 </div>`;
             }
             grid.innerHTML = html;
-        }
-
-        function renderPayments() {
-            let html = '';
-            const today = new Date(); today.setHours(0,0,0,0);
-            
-            payments.filter(p => !p.is_paid).forEach(p => {
-                const dDate = new Date(p.due_date);
-                const diffDays = Math.ceil((dDate - today) / (1000 * 60 * 60 * 24));
-                let statusText = diffDays < 0 ? 'Проср.' : (diffDays === 0 ? 'Сегодня' : `${diffDays} дн.`);
-                let color = diffDays <= 3 ? 'text-red-500 bg-red-50' : 'text-gray-500 bg-gray-100';
-                let icon = p.payment_type.includes('Долг') ? 'ph-hand-coins text-red-500' : 'ph-calendar text-brand';
-
-                html += `
-                <div class="group flex items-center justify-between p-3 border border-gray-100 rounded-xl bg-white hover:shadow-sm transition relative">
-                    <div class="flex items-center space-x-3 overflow-hidden">
-                        <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center shrink-0"><i class="ph ${icon}"></i></div>
-                        <div class="truncate">
-                            <p class="text-sm font-semibold text-gray-900 truncate pr-6">${p.title}</p>
-                            <p class="text-xs text-gray-500">${new Date(p.due_date).toLocaleDateString('ru-RU', {day:'2-digit', month:'short'})}</p>
-                        </div>
-                    </div>
-                    <div class="text-right pl-2 shrink-0 flex flex-col items-end">
-                        <p class="text-sm font-bold">${formatMoney(p.amount, p.currency)}</p>
-                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded mt-0.5 ${color}">${statusText}</span>
-                    </div>
-                    <div class="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition bg-white p-1 rounded shadow-sm border border-gray-100">
-                        <button onclick="editPayment('${p.id}')" class="text-gray-400 hover:text-brand"><i class="ph ph-pencil-simple"></i></button>
-                        <button onclick="deletePayment('${p.id}')" class="text-gray-400 hover:text-red-500"><i class="ph ph-trash"></i></button>
-                    </div>
-                </div>`;
-            });
-            document.getElementById('upcoming-payments-container').innerHTML = html || '<p class="text-xs text-gray-400 text-center py-4">Нет платежей</p>';
         }
 
         function setChartCurrency(curr) {
@@ -462,7 +480,7 @@
             const parents = budgets.filter(b => !b.parent_id && b.currency === chartCurrency);
             let total = parents.reduce((sum, b) => sum + Number(b.planned_amount), 0);
             
-            document.getElementById('donut-total').innerText = formatMoney(total, chartCurrency);
+            document.getElementById('donut-total').innerText = formatMoney(total) + ' ' + chartCurrency;
             
             let gradientStr = ''; let legendHtml = ''; let currentPct = 0;
 
@@ -488,7 +506,7 @@
             document.getElementById('donut-legend').innerHTML = legendHtml;
         }
 
-        // --- Управление Модалками, Редактирование, Удаление ---
+        // --- Управление Модалками ---
         function openNewBudgetModal() {
             document.getElementById('budget-id').value = '';
             document.getElementById('budget-cat').value = '';
