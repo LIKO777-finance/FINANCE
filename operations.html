@@ -60,6 +60,10 @@
                     <i class="ph ph-chart-pie-slice text-xl"></i>
                     <span>Бюджеты</span>
                 </a>
+                <a href="debts.html" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="ph ph-hand-coins text-xl"></i>
+                    <span>Долги / Рассрочки</span>
+                </a>
             </nav>
         </div>
         <div class="p-4 border-t border-gray-200 m-4 flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-xl transition">
@@ -381,7 +385,6 @@
             }
         }
 
-        /* --- ЛОГИКА ЦВЕТОВ БАНКОВ --- */
         function getBankColor(accountName) {
             if (!accountName) return 'bg-gray-300';
             const name = accountName.toLowerCase();
@@ -425,7 +428,6 @@
             updateAccountLabels();
         }
 
-        /* --- ЛОГИКА УМНОГО КАЛЬКУЛЯТОРА --- */
         function setupAutoCalculator() {
             const amtIn = document.getElementById('op-amount');
             const rateIn = document.getElementById('op-exchange-rate');
@@ -467,7 +469,6 @@
             }
         }
 
-        /* --- ДИНАМИЧЕСКИЙ ФИЛЬТР МЕСЯЦЕВ --- */
         function initMonthFilter() {
             const filter = document.getElementById('month-filter');
             if (!filter) return;
@@ -492,7 +493,6 @@
             if(!filter.value) filter.value = currentPeriod;
         }
 
-        /* --- ОТОБРАЖЕНИЕ --- */
         function setTab(tabName) {
             currentTab = tabName;
             document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -686,10 +686,11 @@
             document.getElementById('top-income-cat').innerText = topInc;
         }
 
+        // ОБНОВЛЕННЫЙ ЭКСПОРТ В CSV С ИНФОРМАЦИЕЙ О СЧЕТАХ
         function exportToCSV() {
             const periodFilter = document.getElementById('month-filter').value;
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
-            csvContent += "Дата,Время,Тип,Категория,Подкатегория,Сумма,Валюта,Комиссия,Курс,Примечание\n";
+            csvContent += "Дата,Время,Тип,Счет списания,Счет зачисления,Категория,Подкатегория,Сумма,Валюта,Комиссия,Курс,Примечание\n";
             
             transactionsData.forEach(t => {
                 const matchPeriod = periodFilter === 'All' || (t.created_at && t.created_at.startsWith(periodFilter));
@@ -697,8 +698,12 @@
 
                 const date = new Date(t.created_at).toLocaleDateString('ru-RU');
                 const time = new Date(t.created_at).toLocaleTimeString('ru-RU');
+                
+                const accFrom = accountsData.find(a => a.id === t.account_id)?.name || 'Удаленный счет';
+                const accTo = t.to_account_id ? (accountsData.find(a => a.id === t.to_account_id)?.name || 'Удаленный счет') : '';
+
                 let row = [
-                    date, time, t.type, t.category, t.subcategory || '', 
+                    date, time, t.type, accFrom, accTo, t.category, t.subcategory || '', 
                     t.amount, t.currency, t.commission || 0, t.exchange_rate || 1, t.description || ''
                 ].map(v => `"${v}"`).join(",");
                 csvContent += row + "\n";
@@ -828,7 +833,6 @@
         async function updateBalance(accountId, diffAmount) {
             const acc = accountsData.find(a => a.id === accountId);
             if(acc) {
-                // Жестко приводим к числу и отбрасываем артефакты JS (типа 0.3000000004)
                 const currentBal = parseFloat(acc.balance) || 0;
                 const diff = parseFloat(diffAmount) || 0;
                 const newBal = parseFloat((currentBal + diff).toFixed(2));
@@ -836,7 +840,6 @@
                 const { error } = await supabaseClient.from('accounts').update({ balance: newBal }).eq('id', accountId);
                 if (error) throw error;
                 
-                // Обновляем локально сразу же, чтобы при цепочке вызовов данные были актуальны
                 acc.balance = newBal; 
             }
         }
@@ -845,18 +848,14 @@
             const amount = parseFloat(t.amount) || 0;
             
             if (t.type === 'Доход') {
-                // Если мы удаляем доход, деньги со счета нужно списать
                 await updateBalance(t.account_id, -amount);
             } else if (t.type === 'Расход' || t.type === 'Инвестиция') {
-                // Если удаляем расход, деньги нужно ВЕРНУТЬ на счет
                 await updateBalance(t.account_id, amount);
             } else if (t.type === 'Перевод') {
                 const commission = parseFloat(t.commission) || 0;
                 const rate = parseFloat(t.exchange_rate) || 1;
                 
-                // Возвращаем сумму + комиссию на счет списания
                 await updateBalance(t.account_id, amount + commission);
-                // Списываем со счета зачисления сконвертированную сумму
                 await updateBalance(t.to_account_id, -parseFloat((amount * rate).toFixed(2)));
             }
         }
@@ -864,12 +863,10 @@
         async function deleteOperation(id) {
             if(!confirm('Удалить операцию? Баланс счета будет пересчитан автоматически.')) return;
             
-            // Предотвращение двойных кликов
             const menuBtn = document.querySelector(`#op-menu-${id}`)?.parentElement?.querySelector('button');
             if(menuBtn) menuBtn.disabled = true;
 
             try {
-                // Запрашиваем свежие данные транзакции из базы
                 const { data: txData, error: txErr } = await supabaseClient.from('transactions').select('*').eq('id', id).single();
                 if(txErr || !txData) throw new Error("Транзакция не найдена");
 
@@ -878,7 +875,6 @@
                 const { error: delErr } = await supabaseClient.from('transactions').delete().eq('id', id);
                 if (delErr) throw delErr;
                 
-                // Обязательно ждем завершения загрузки новых данных перед тем как продолжить
                 await initData();
             } catch(e) {
                 alert("Ошибка при удалении: " + e.message);
