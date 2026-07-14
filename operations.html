@@ -13,10 +13,7 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        brand: '#4f46e5',
-                        'brand-light': '#e0e7ff',
-                    }
+                    colors: { brand: '#4f46e5', 'brand-light': '#e0e7ff' }
                 }
             }
         }
@@ -24,17 +21,11 @@
     <style>
         .modal-enter { opacity: 0; transform: scale(0.95); }
         .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.2s ease-out; }
-        
-        /* Стили для скроллбара */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
-        
-        .chart-donut {
-            background: conic-gradient( #10b981 0% 60%, #e5e7eb 60% 100% );
-            border-radius: 50%;
-        }
+        .chart-donut { background: conic-gradient( #10b981 0% 60%, #e5e7eb 60% 100% ); border-radius: 50%; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans flex h-screen overflow-hidden">
@@ -47,20 +38,23 @@
                 </div>
                 <span class="text-xl font-bold text-gray-900">FinFlow</span>
             </div>
-            <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
-    <a href="index.html" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
-        <i class="ph ph-wallet text-xl"></i>Счета
-    </a>
-    <a href="operations.html" class="flex items-center gap-3 px-3 py-2 bg-brand-light text-brand font-medium rounded-lg">
-        <i class="ph ph-list-dashes text-xl"></i>Операции
-    </a>
-    <a href="budgets.html" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
-        <i class="ph ph-chart-pie-slice text-xl"></i>Бюджеты
-    </a>
-    <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
-        <i class="ph ph-trend-up text-xl"></i>Аналитика
-    </a>
-</nav>
+            <nav class="mt-4 px-4 space-y-1">
+                <a href="index.html" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="ph ph-wallet text-xl"></i><span>Счета</span>
+                </a>
+                <a href="operations.html" class="flex items-center space-x-3 w-full px-4 py-3 bg-brand-light text-brand rounded-xl font-medium transition">
+                    <i class="ph ph-list-dashes text-xl"></i><span>Операции</span>
+                </a>
+                <a href="budgets.html" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="ph ph-chart-pie-slice text-xl"></i><span>Бюджеты</span>
+                </a>
+                <a href="analytics.html" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="ph ph-trend-up text-xl"></i><span>Аналитика</span>
+                </a>
+                <a href="debts.html" class="flex items-center space-x-3 w-full px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition">
+                    <i class="ph ph-hand-coins text-xl"></i><span>Долги / Рассрочки</span>
+                </a>
+            </nav>
         </div>
         <div class="p-4 border-t border-gray-200 m-4 flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-xl transition">
             <img src="https://ui-avatars.com/api/?name=Андрей+Иванов&background=random" alt="Avatar" class="w-10 h-10 rounded-full" />
@@ -79,35 +73,25 @@
             </div>
             <div class="flex items-center space-x-4">
                 <button onclick="exportToCSV()" class="flex items-center space-x-2 border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition text-gray-700">
-                    <i class="ph ph-download-simple"></i>
-                    <span class="hidden sm:inline">Экспорт CSV</span>
+                    <i class="ph ph-download-simple"></i><span class="hidden sm:inline">Экспорт CSV</span>
                 </button>
                 <button onclick="openTransactionModal()" class="flex items-center space-x-2 bg-brand text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition">
-                    <i class="ph ph-plus"></i>
-                    <span class="hidden sm:inline">Новая операция</span>
+                    <i class="ph ph-plus"></i><span class="hidden sm:inline">Новая операция</span>
                 </button>
             </div>
         </header>
 
         <div class="p-8 flex-1 flex flex-col xl:flex-row gap-8">
-            
             <div class="flex-1 min-w-0">
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <img src="https://flagcdn.com/w20/by.png" class="w-5 h-5 rounded-full object-cover">
-                            <span class="text-sm font-medium text-gray-600">BYN (Бел. рубль)</span>
-                        </div>
+                        <div class="flex items-center space-x-2 mb-2"><img src="https://flagcdn.com/w20/by.png" class="w-5 h-5 rounded-full object-cover"><span class="text-sm font-medium text-gray-600">BYN (Бел. рубль)</span></div>
                         <div class="text-xl font-bold text-emerald-500 mb-1" id="stat-inc-byn">+0 Br</div>
                         <div class="text-xs text-gray-400">доходы за период</div>
                         <i class="ph ph-trend-up absolute right-4 bottom-4 text-4xl text-emerald-50 opacity-50"></i>
                     </div>
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <img src="https://flagcdn.com/w20/ru.png" class="w-5 h-5 rounded-full object-cover">
-                            <span class="text-sm font-medium text-gray-600">RUB (Рос. рубль)</span>
-                        </div>
+                        <div class="flex items-center space-x-2 mb-2"><img src="https://flagcdn.com/w20/ru.png" class="w-5 h-5 rounded-full object-cover"><span class="text-sm font-medium text-gray-600">RUB (Рос. рубль)</span></div>
                         <div class="text-xl font-bold text-blue-500 mb-1" id="stat-inc-rub">+0 ₽</div>
                         <div class="text-xs text-gray-400">доходы за период</div>
                         <i class="ph ph-trend-up absolute right-4 bottom-4 text-4xl text-blue-50 opacity-50"></i>
@@ -136,9 +120,7 @@
                     </div>
                     
                     <div class="flex items-center space-x-3 w-full sm:w-auto flex-wrap gap-2 sm:gap-0">
-                        <select id="month-filter" onchange="renderTransactions(); calculateStats();" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-brand transition cursor-pointer font-medium text-gray-700">
-                        </select>
-                        
+                        <select id="month-filter" onchange="renderTransactions(); calculateStats();" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-brand transition cursor-pointer font-medium text-gray-700"></select>
                         <select id="currency-filter" onchange="renderTransactions()" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:border-brand transition cursor-pointer">
                             <option value="All">Все валюты</option>
                             <option value="Br">Только Br (BYN)</option>
@@ -156,7 +138,6 @@
                 <div id="transactions-container" class="space-y-6 pb-10">
                     <div class="text-center py-10 text-gray-400">Загрузка данных...</div>
                 </div>
-
             </div>
 
             <aside class="w-full xl:w-80 shrink-0 space-y-6">
@@ -172,9 +153,7 @@
                                 <p class="font-semibold text-emerald-600 text-sm" id="sidebar-inc-byn">0 Br</p>
                                 <p class="font-semibold text-emerald-600 text-sm" id="sidebar-inc-rub">0 ₽</p>
                             </div>
-                            <div class="w-12 h-12 chart-donut relative" style="background: conic-gradient(#10b981 0% 100%);">
-                                <div class="absolute inset-1.5 bg-white rounded-full"></div>
-                            </div>
+                            <div class="w-12 h-12 chart-donut relative" style="background: conic-gradient(#10b981 0% 100%);"><div class="absolute inset-1.5 bg-white rounded-full"></div></div>
                         </div>
                         <div class="border-t border-gray-100"></div>
                         <div class="flex items-center justify-between">
@@ -183,9 +162,7 @@
                                 <p class="font-semibold text-red-500 text-sm" id="sidebar-exp-byn">0 Br</p>
                                 <p class="font-semibold text-red-500 text-sm" id="sidebar-exp-rub">0 ₽</p>
                             </div>
-                            <div class="w-12 h-12 chart-donut relative" style="background: conic-gradient(#ef4444 0% 100%);">
-                                <div class="absolute inset-1.5 bg-white rounded-full"></div>
-                            </div>
+                            <div class="w-12 h-12 chart-donut relative" style="background: conic-gradient(#ef4444 0% 100%);"><div class="absolute inset-1.5 bg-white rounded-full"></div></div>
                         </div>
                     </div>
                 </div>
@@ -218,9 +195,7 @@
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 transition-transform my-8" id="transaction-modal-content">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-gray-900" id="modal-title">Новая операция</h3>
-                <button type="button" onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-700 transition">
-                    <i class="ph ph-x text-2xl"></i>
-                </button>
+                <button type="button" onclick="closeTransactionModal()" class="text-gray-400 hover:text-gray-700 transition"><i class="ph ph-x text-2xl"></i></button>
             </div>
             
             <div class="flex bg-gray-100 p-1 rounded-xl mb-6">
@@ -237,9 +212,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1" id="label-acc-from">Счет списания</label>
                     <div class="relative">
                         <button type="button" onclick="toggleCustomDropdown('from')" class="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-left shadow-sm">
-                            <div id="selected-acc-from" class="flex items-center space-x-3 truncate">
-                                <span class="text-gray-400">Выберите счет...</span>
-                            </div>
+                            <div id="selected-acc-from" class="flex items-center space-x-3 truncate"><span class="text-gray-400">Выберите счет...</span></div>
                             <i class="ph ph-caret-down text-gray-400"></i>
                         </button>
                         <div id="list-dropdown-from" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-60 overflow-y-auto py-1"></div>
@@ -251,9 +224,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Счет зачисления</label>
                     <div class="relative">
                         <button type="button" onclick="toggleCustomDropdown('to')" class="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-left shadow-sm">
-                            <div id="selected-acc-to" class="flex items-center space-x-3 truncate">
-                                <span class="text-gray-400">Выберите счет...</span>
-                            </div>
+                            <div id="selected-acc-to" class="flex items-center space-x-3 truncate"><span class="text-gray-400">Выберите счет...</span></div>
                             <i class="ph ph-caret-down text-gray-400"></i>
                         </button>
                         <div id="list-dropdown-to" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-60 overflow-y-auto py-1"></div>
@@ -265,9 +236,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1" id="label-amount">Сумма</label>
                     <div class="relative">
                         <input type="number" id="op-amount" required placeholder="0.00" step="0.01" class="w-full px-4 py-3 text-lg font-semibold border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition pr-12">
-                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                            <span class="text-gray-400 font-bold sm:text-sm" id="source-currency-badge"></span>
-                        </div>
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none"><span class="text-gray-400 font-bold sm:text-sm" id="source-currency-badge"></span></div>
                     </div>
                 </div>
 
@@ -276,9 +245,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Сумма зачисления</label>
                         <div class="relative">
                             <input type="number" id="op-target-amount" placeholder="0.00" step="0.01" class="w-full px-4 py-3 text-lg font-semibold border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition bg-white pr-12 text-emerald-700">
-                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                <span class="text-gray-400 font-bold sm:text-sm" id="target-currency-badge"></span>
-                            </div>
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none"><span class="text-gray-400 font-bold sm:text-sm" id="target-currency-badge"></span></div>
                         </div>
                     </div>
                     <div>
@@ -289,9 +256,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Комиссия банка</label>
                         <div class="relative">
                             <input type="number" id="op-commission" placeholder="0.00" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white pr-10">
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <span class="text-gray-400 font-bold text-xs" id="comm-currency-badge"></span>
-                            </div>
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none"><span class="text-gray-400 font-bold text-xs" id="comm-currency-badge"></span></div>
                         </div>
                     </div>
                 </div>
@@ -299,13 +264,11 @@
                 <div class="grid grid-cols-2 gap-4" id="field-category-date">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Категория</label>
-                        <select id="op-category" onchange="updateSubcategories()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
-                        </select>
+                        <select id="op-category" onchange="updateSubcategories()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Подкатегория</label>
-                        <select id="op-subcategory" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
-                        </select>
+                        <select id="op-subcategory" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white"></select>
                     </div>
                 </div>
 
@@ -328,9 +291,9 @@
     </div>
 
     <script>
-        const supabaseUrl = 'https://ujjuoyfykkmgcaeujami.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqanVveWZ5a2ttZ2NhZXVqYW1pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3Nzg1MDYsImV4cCI6MjA5ODM1NDUwNn0.Rf9cDJQrsr8mTfaNBgpUabwU3oq81Wcvr8xcyYIoKFg';
-        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+        const supabaseUrl = 'YOUR_URL';
+        const supabaseKey = 'YOUR_KEY';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
         let accountsData = [];
         let transactionsData = [];
@@ -339,7 +302,7 @@
 
         const categoriesData = {
             'Расход': {
-                'Основное': ['квартира', 'коммуналка', 'интернет', 'телефоны', 'налоги бел', 'налоги рос', 'налоги 13%', 'подписки', 'работа', 'рассрочки'],
+                'Основное': ['квартира', 'коммуналка', 'интернет', 'телефоны', 'налоги бел', 'налоги рос', 'налоги 13%', 'подписки', 'работа'],
                 'Еда': ['мясо', 'колбасы', 'хлебобулочные', 'молочка', 'крупы', 'консервы', 'рыба', 'специи', 'снэки', 'фрукты и овощи', 'вода', 'напитки', 'алкоголь', 'масло', 'конфеты', 'чай', 'на заказ', 'соусы', 'пакет'],
                 'Машина': ['бензин', 'сервис', 'мойка'],
                 'Развлечения': ['развлечения', 'красота', 'гигиена', 'медицина', 'одежда', 'обувь', 'аксессуары', 'книги', 'подарки', 'электроника', 'учеба'],
@@ -376,9 +339,7 @@
                 renderTransactions();
                 calculateStats();
                 setupAutoCalculator(); 
-            } catch (error) {
-                console.error("Ошибка загрузки:", error);
-            }
+            } catch (error) { console.error("Ошибка загрузки:", error); }
         }
 
         function getBankColor(accountName) {
@@ -550,69 +511,53 @@
 
             let html = '';
             for (const [date, transList] of Object.entries(grouped)) {
-                html += `
-                <div class="mb-6">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">${date}</h3>
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100">
-                        ${transList.map(t => {
-                            const time = new Date(t.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                            const style = getCategoryStyle(t.category, t.type);
-                            const acc = accountsData.find(a => a.id === t.account_id);
-                            const accName = acc ? acc.name : 'Удаленный счет';
-                            
-                            let amountHtml = '';
-                            let titleHtml = t.category;
-                            if (t.subcategory) titleHtml += ` <span class="text-gray-400 text-sm font-normal">/ ${t.subcategory}</span>`;
-                            
-                            if (t.type === 'Доход') amountHtml = `<span class="font-semibold text-emerald-500 whitespace-nowrap">+${formatMoney(t.amount, t.currency)}</span>`;
-                            else if (t.type === 'Расход') amountHtml = `<span class="font-semibold text-gray-900 whitespace-nowrap">-${formatMoney(t.amount, t.currency)}</span>`;
-                            else if (t.type === 'Инвестиция') amountHtml = `<span class="font-semibold text-indigo-600 whitespace-nowrap">${formatMoney(t.amount, t.currency)}</span>`;
-                            else if (t.type === 'Перевод') {
-                                const toAcc = accountsData.find(a => a.id === t.to_account_id);
-                                const toName = toAcc ? toAcc.name : 'Удаленный счет';
-                                titleHtml = `Перевод средств`;
-                                
-                                let details = [];
-                                if (t.commission && Number(t.commission) > 0) details.push(`ком. ${formatMoney(t.commission, t.currency)}`);
-                                if (t.exchange_rate && Number(t.exchange_rate) !== 1) details.push(`курс: ${t.exchange_rate}`);
-                                if (details.length > 0) {
-                                    titleHtml += ` <span class="text-xs text-gray-400 font-normal">(${details.join(', ')})</span>`;
-                                }
+                html += `<div class="mb-6"><h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-2">${date}</h3><div class="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100">`;
+                html += transList.map(t => {
+                    const time = new Date(t.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                    const style = getCategoryStyle(t.category, t.type);
+                    const acc = accountsData.find(a => a.id === t.account_id);
+                    const accName = acc ? acc.name : 'Удаленный счет';
+                    
+                    let amountHtml = '';
+                    let titleHtml = t.category;
+                    if (t.subcategory) titleHtml += ` <span class="text-gray-400 text-sm font-normal">/ ${t.subcategory}</span>`;
+                    
+                    if (t.type === 'Доход') amountHtml = `<span class="font-semibold text-emerald-500 whitespace-nowrap">+${formatMoney(t.amount, t.currency)}</span>`;
+                    else if (t.type === 'Расход') amountHtml = `<span class="font-semibold text-gray-900 whitespace-nowrap">-${formatMoney(t.amount, t.currency)}</span>`;
+                    else if (t.type === 'Инвестиция') amountHtml = `<span class="font-semibold text-indigo-600 whitespace-nowrap">${formatMoney(t.amount, t.currency)}</span>`;
+                    else if (t.type === 'Перевод') {
+                        const toAcc = accountsData.find(a => a.id === t.to_account_id);
+                        const toName = toAcc ? toAcc.name : 'Удаленный счет';
+                        titleHtml = `Перевод средств`;
+                        let details = [];
+                        if (t.commission && Number(t.commission) > 0) details.push(`ком. ${formatMoney(t.commission, t.currency)}`);
+                        if (t.exchange_rate && Number(t.exchange_rate) !== 1) details.push(`курс: ${t.exchange_rate}`);
+                        if (details.length > 0) titleHtml += ` <span class="text-xs text-gray-400 font-normal">(${details.join(', ')})</span>`;
+                        amountHtml = `<span class="font-semibold text-purple-600 whitespace-nowrap">${formatMoney(t.amount, t.currency)}</span>`;
+                    }
 
-                                amountHtml = `<span class="font-semibold text-purple-600 whitespace-nowrap">${formatMoney(t.amount, t.currency)}</span>`;
-                            }
-
-                            return `
-                            <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition relative op-item">
-                                <div class="flex items-center space-x-4 min-w-0 flex-1">
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${style.color}">
-                                        <i class="ph ${style.icon} text-lg"></i>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <p class="font-semibold text-gray-900 truncate text-sm sm:text-base">${titleHtml}</p>
-                                        <p class="text-xs text-gray-500 truncate mt-0.5">
-                                            ${time} • 
-                                            ${t.type === 'Перевод' ? `${accName} &rarr; ${accountsData.find(a => a.id === t.to_account_id)?.name || '?'}` : accName}
-                                            ${t.description ? ` • <i>${t.description}</i>` : ''}
-                                        </p>
-                                    </div>
+                    return `
+                    <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition relative op-item">
+                        <div class="flex items-center space-x-4 min-w-0 flex-1">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${style.color}"><i class="ph ${style.icon} text-lg"></i></div>
+                            <div class="min-w-0 flex-1">
+                                <p class="font-semibold text-gray-900 truncate text-sm sm:text-base">${titleHtml}</p>
+                                <p class="text-xs text-gray-500 truncate mt-0.5">${time} • ${t.type === 'Перевод' ? `${accName} &rarr; ${accountsData.find(a => a.id === t.to_account_id)?.name || '?'}` : accName} ${t.description ? ` • <i>${t.description}</i>` : ''}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4 shrink-0 pl-4">
+                            <div class="text-right">${amountHtml}</div>
+                            <div class="relative op-menu-container">
+                                <button onclick="toggleOpMenu('${t.id}', event)" class="p-1 text-gray-400 hover:text-gray-900 rounded-lg transition"><i class="ph ph-dots-three-vertical text-xl"></i></button>
+                                <div id="op-menu-${t.id}" class="hidden absolute right-0 top-full mt-1 w-32 bg-white border border-gray-100 rounded-xl shadow-lg z-20 py-1">
+                                    <button onclick="editOperation('${t.id}')" class="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition"><i class="ph ph-pencil-simple mr-2"></i>Изменить</button>
+                                    <button onclick="deleteOperation('${t.id}')" class="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition"><i class="ph ph-trash mr-2"></i>Удалить</button>
                                 </div>
-                                <div class="flex items-center space-x-4 shrink-0 pl-4">
-                                    <div class="text-right">${amountHtml}</div>
-                                    <div class="relative op-menu-container">
-                                        <button onclick="toggleOpMenu('${t.id}', event)" class="p-1 text-gray-400 hover:text-gray-900 rounded-lg transition">
-                                            <i class="ph ph-dots-three-vertical text-xl"></i>
-                                        </button>
-                                        <div id="op-menu-${t.id}" class="hidden absolute right-0 top-full mt-1 w-32 bg-white border border-gray-100 rounded-xl shadow-lg z-20 py-1">
-                                            <button onclick="editOperation('${t.id}')" class="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center transition"><i class="ph ph-pencil-simple mr-2"></i>Изменить</button>
-                                            <button onclick="deleteOperation('${t.id}')" class="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center transition"><i class="ph ph-trash mr-2"></i>Удалить</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>`;
-                        }).join('')}
-                    </div>
-                </div>`;
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+                html += `</div></div>`;
             }
             container.innerHTML = html;
         }
@@ -635,7 +580,6 @@
             let catCounts = { exp: {}, inc: {} };
             transactionsData.forEach(t => {
                 const matchPeriod = periodFilter === 'All' || (t.created_at && t.created_at.startsWith(periodFilter));
-                
                 if (matchPeriod) {
                     if (t.type === 'Доход') {
                         if (t.currency === 'Br') incByn += Number(t.amount);
@@ -650,11 +594,9 @@
                 }
             });
             document.getElementById('sidebar-period-badge').innerText = periodFilter === 'All' ? 'Все время' : periodFilter;
-
             document.getElementById('stat-inc-byn').innerText = `+${formatMoney(incByn, 'Br')}`;
             document.getElementById('stat-inc-rub').innerText = `+${formatMoney(incRub, '₽')}`;
             document.getElementById('stat-exp-total').innerText = `-${formatMoney(expByn, 'Br')} / -${formatMoney(expRub, '₽')}`;
-
             document.getElementById('sidebar-inc-byn').innerText = formatMoney(incByn, 'Br');
             document.getElementById('sidebar-inc-rub').innerText = formatMoney(incRub, '₽');
             document.getElementById('sidebar-exp-byn').innerText = formatMoney(expByn, 'Br');
@@ -682,7 +624,6 @@
             document.getElementById('top-income-cat').innerText = topInc;
         }
 
-        // ОБНОВЛЕННЫЙ ЭКСПОРТ В CSV С ИНФОРМАЦИЕЙ О СЧЕТАХ
         function exportToCSV() {
             const periodFilter = document.getElementById('month-filter').value;
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
@@ -691,58 +632,43 @@
             transactionsData.forEach(t => {
                 const matchPeriod = periodFilter === 'All' || (t.created_at && t.created_at.startsWith(periodFilter));
                 if (!matchPeriod) return; 
-
                 const date = new Date(t.created_at).toLocaleDateString('ru-RU');
                 const time = new Date(t.created_at).toLocaleTimeString('ru-RU');
-                
                 const accFrom = accountsData.find(a => a.id === t.account_id)?.name || 'Удаленный счет';
                 const accTo = t.to_account_id ? (accountsData.find(a => a.id === t.to_account_id)?.name || 'Удаленный счет') : '';
 
-                let row = [
-                    date, time, t.type, accFrom, accTo, t.category, t.subcategory || '', 
-                    t.amount, t.currency, t.commission || 0, t.exchange_rate || 1, t.description || ''
-                ].map(v => `"${v}"`).join(",");
+                let row = [date, time, t.type, accFrom, accTo, t.category, t.subcategory || '', t.amount, t.currency, t.commission || 0, t.exchange_rate || 1, t.description || ''].map(v => `"${v}"`).join(",");
                 csvContent += row + "\n";
             });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
             link.setAttribute("download", `operations_${periodFilter === 'All' ? 'all-time' : periodFilter}.csv`);
-            document.body.appendChild(link); link.click();
-            document.body.removeChild(link);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
         const modal = document.getElementById('transaction-modal');
         const modalContent = document.getElementById('transaction-modal-content');
+
         function openTransactionModal() {
             if (accountsData.length === 0) { alert("Сначала создайте счет в разделе 'Счета'."); return; }
-            
-            let optionsHtml = '';
-            let customListHtml = '';
+            let optionsHtml = ''; let customListHtml = '';
             
             accountsData.forEach(acc => {
                 const color = getBankColor(acc.name);
                 optionsHtml += `<option value="${acc.id}">${acc.name}</option>`;
-                
                 const btnHtml = `
                     <button type="button" onclick="selectCustomAccount('TYPE', '${acc.id}', '${acc.name}', ${acc.balance}, '${acc.currency}')" class="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-3 transition border-b border-gray-50 last:border-0">
                         <div class="w-3.5 h-3.5 rounded-full ${color} shadow-sm shrink-0"></div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate">${acc.name}</p>
-                        </div>
-                        <div class="text-sm text-gray-500 font-medium whitespace-nowrap">
-                            ${formatMoney(acc.balance, acc.currency)}
-                        </div>
+                        <div class="flex-1 min-w-0"><p class="text-sm font-medium text-gray-900 truncate">${acc.name}</p></div>
+                        <div class="text-sm text-gray-500 font-medium whitespace-nowrap">${formatMoney(acc.balance, acc.currency)}</div>
                     </button>
                 `;
                 customListHtml += btnHtml;
             });
 
-            document.getElementById('op-account-id').innerHTML = optionsHtml;
-            document.getElementById('op-to-account-id').innerHTML = optionsHtml;
-            
-            document.getElementById('list-dropdown-from').innerHTML = customListHtml.replace(/TYPE/g, 'from');
-            document.getElementById('list-dropdown-to').innerHTML = customListHtml.replace(/TYPE/g, 'to');
+            document.getElementById('op-account-id').innerHTML = optionsHtml; document.getElementById('op-to-account-id').innerHTML = optionsHtml;
+            document.getElementById('list-dropdown-from').innerHTML = customListHtml.replace(/TYPE/g, 'from'); document.getElementById('list-dropdown-to').innerHTML = customListHtml.replace(/TYPE/g, 'to');
             
             if(!document.getElementById('op-id').value) {
                 document.getElementById('modal-title').innerText = 'Новая операция';
@@ -757,33 +683,25 @@
                     selectCustomAccount('to', accountsData[0].id, accountsData[0].name, accountsData[0].balance, accountsData[0].currency);
                 }
             }
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
             setTimeout(() => { modalContent.classList.remove('scale-95'); modalContent.classList.add('scale-100'); }, 10);
             updateAccountLabels();
         }
 
         function closeTransactionModal() {
-            modalContent.classList.remove('scale-100');
-            modalContent.classList.add('scale-95');
+            modalContent.classList.remove('scale-100'); modalContent.classList.add('scale-95');
             setTimeout(() => {
                 modal.classList.add('hidden'); modal.classList.remove('flex');
-                document.getElementById('op-id').value = '';
-                document.getElementById('op-amount').value = '';
-                document.getElementById('op-description').value = '';
-                document.getElementById('op-commission').value = '0.00';
-                document.getElementById('op-exchange-rate').value = '1.0000';
-                document.getElementById('op-target-amount').value = '';
+                document.getElementById('op-id').value = ''; document.getElementById('op-amount').value = '';
+                document.getElementById('op-description').value = ''; document.getElementById('op-commission').value = '0.00';
+                document.getElementById('op-exchange-rate').value = '1.0000'; document.getElementById('op-target-amount').value = '';
             }, 150);
         }
 
         function setOpType(type) {
             document.getElementById('op-type').value = type;
             const btns = ['expense', 'income', 'transfer', 'investment'];
-            btns.forEach(b => {
-                document.getElementById(`btn-type-${b}`).className = 'flex-1 py-1.5 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-900 transition flex items-center justify-center gap-1';
-            });
+            btns.forEach(b => { document.getElementById(`btn-type-${b}`).className = 'flex-1 py-1.5 text-sm font-medium rounded-lg text-gray-500 hover:text-gray-900 transition flex items-center justify-center gap-1'; });
             const activeMap = {'Расход':'expense', 'Доход':'income', 'Перевод':'transfer', 'Инвестиция':'investment'};
             document.getElementById(`btn-type-${activeMap[type]}`).className = 'flex-1 py-1.5 text-sm font-medium rounded-lg bg-white shadow-sm text-gray-900 transition flex items-center justify-center gap-1';
             
@@ -802,9 +720,7 @@
                 
                 const catSelect = document.getElementById('op-category');
                 catSelect.innerHTML = '';
-                Object.keys(categoriesData[type] || {}).forEach(cat => {
-                    catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
-                });
+                Object.keys(categoriesData[type] || {}).forEach(cat => { catSelect.innerHTML += `<option value="${cat}">${cat}</option>`; });
                 updateSubcategories();
             }
             updateAccountLabels();
@@ -817,57 +733,24 @@
             
             subSelect.innerHTML = '<option value="">Без подкатегории</option>';
             const subs = categoriesData[type]?.[cat] || [];
-            if (subs.length === 0) {
-                subSelect.disabled = true;
-            } else {
+            if (subs.length === 0) { subSelect.disabled = true; } else {
                 subSelect.disabled = false;
                 subs.forEach(sub => { subSelect.innerHTML += `<option value="${sub}">${sub}</option>`; });
             }
         }
 
-        // --- БЕЗОПАСНАЯ И ТОЧНАЯ МАТЕМАТИКА БАЛАНСОВ ---
-        async function updateBalance(accountId, diffAmount) {
-            const acc = accountsData.find(a => a.id === accountId);
-            if(acc) {
-                const currentBal = parseFloat(acc.balance) || 0;
-                const diff = parseFloat(diffAmount) || 0;
-                const newBal = parseFloat((currentBal + diff).toFixed(2));
-                
-                const { error } = await supabaseClient.from('accounts').update({ balance: newBal }).eq('id', accountId);
-                if (error) throw error;
-                
-                acc.balance = newBal; 
-            }
-        }
-
-        async function revertTransactionBalance(t) {
-            const amount = parseFloat(t.amount) || 0;
-            
-            if (t.type === 'Доход') {
-                await updateBalance(t.account_id, -amount);
-            } else if (t.type === 'Расход' || t.type === 'Инвестиция') {
-                await updateBalance(t.account_id, amount);
-            } else if (t.type === 'Перевод') {
-                const commission = parseFloat(t.commission) || 0;
-                const rate = parseFloat(t.exchange_rate) || 1;
-                
-                await updateBalance(t.account_id, amount + commission);
-                await updateBalance(t.to_account_id, -parseFloat((amount * rate).toFixed(2)));
-            }
-        }
+        // ==========================================
+        // БОЛЬШЕ НИКАКИХ РУЧНЫХ ФУНКЦИЙ РАСЧЕТА БАЛАНСА
+        // База данных (SQL-триггер) делает всё сама!
+        // ==========================================
 
         async function deleteOperation(id) {
-            if(!confirm('Удалить операцию? Баланс счета будет пересчитан автоматически.')) return;
-            
+            if(!confirm('Удалить операцию? Баланс счета будет пересчитан базой данных автоматически.')) return;
             const menuBtn = document.querySelector(`#op-menu-${id}`)?.parentElement?.querySelector('button');
             if(menuBtn) menuBtn.disabled = true;
 
             try {
-                const { data: txData, error: txErr } = await supabaseClient.from('transactions').select('*').eq('id', id).single();
-                if(txErr || !txData) throw new Error("Транзакция не найдена");
-
-                await revertTransactionBalance(txData);
-                
+                // Мы просто удаляем строку, триггер в БД сам вернет деньги на место
                 const { error: delErr } = await supabaseClient.from('transactions').delete().eq('id', id);
                 if (delErr) throw delErr;
                 
@@ -935,11 +818,6 @@
             }
 
             try {
-                if(editId) {
-                    const { data: oldTx, error: txErr } = await supabaseClient.from('transactions').select('*').eq('id', editId).single();
-                    if(oldTx) await revertTransactionBalance(oldTx);
-                }
-
                 let payload = {
                     type: type, amount: amount, currency: account.currency,
                     account_id: accountId, created_at: createdAt,
@@ -951,10 +829,7 @@
                     payload.subcategory = document.getElementById('op-subcategory').value;
                     payload.commission = 0;
                     payload.exchange_rate = 1;
-                    
-                    const diff = type === 'Доход' ? amount : -amount;
-                    await updateBalance(accountId, diff);
-
+                    payload.to_account_id = null;
                 } else if (type === 'Перевод') {
                     const toAccountId = document.getElementById('op-to-account-id').value;
                     if (accountId === toAccountId) throw new Error('Нельзя перевести на тот же самый счет!');
@@ -963,21 +838,17 @@
                     let exchangeRate = parseFloat(document.getElementById('op-exchange-rate').value) || 1;
                     let targetAmount = parseFloat(document.getElementById('op-target-amount').value);
 
-                    if (!targetAmount) {
-                        targetAmount = parseFloat((amount * exchangeRate).toFixed(2));
-                    } else {
-                        exchangeRate = targetAmount / amount;
-                    }
+                    // Если целевая сумма не введена вручную, берем просто 1 к 1
+                    if (!targetAmount) { exchangeRate = 1; } 
+                    else { exchangeRate = targetAmount / amount; }
 
                     payload.category = 'Перевод';
                     payload.to_account_id = toAccountId;
                     payload.commission = commission;
                     payload.exchange_rate = exchangeRate;
-                    
-                    await updateBalance(accountId, -(amount + commission));
-                    await updateBalance(toAccountId, targetAmount);
                 }
 
+                // База сама обновит все балансы через триггер! Мы просто отправляем строку
                 if(editId) {
                     await supabaseClient.from('transactions').update(payload).eq('id', editId);
                 } else {
