@@ -69,13 +69,19 @@
     </aside>
 
     <main class="flex-1 overflow-y-auto flex flex-col">
-        <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+        <header class="bg-white border-b border-gray-200 px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center sticky top-0 z-10 gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Аналитика финансов</h1>
-                <p class="text-sm text-gray-500 mt-1">Инсайты, тренды, доходы и расходы в разных валютах</p>
+                <p class="text-sm text-gray-500 mt-1">Инсайты и тренды по выбранной валюте</p>
             </div>
             <div class="flex items-center space-x-3">
-                <select id="year-selector" onchange="processAllAnalytics()" class="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none text-gray-700 cursor-pointer">
+                <div class="flex bg-gray-100 p-1 rounded-xl">
+                    <select id="currency-selector" onchange="processAllAnalytics()" class="bg-white px-4 py-2 rounded-lg text-sm font-bold text-gray-800 shadow-sm outline-none cursor-pointer border border-gray-200">
+                        <option value="Br" selected>🇧🇾 BYN (Br)</option>
+                        <option value="₽">🇷🇺 RUB (₽)</option>
+                    </select>
+                </div>
+                <select id="year-selector" onchange="processAllAnalytics()" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-medium outline-none text-gray-700 cursor-pointer shadow-sm">
                     <option value="2026" selected>2026 год</option>
                     <option value="2025">2025 год</option>
                 </select>
@@ -89,67 +95,82 @@
                     <i class="ph ph-sparkle text-amber-400 text-2xl animate-pulse"></i>
                     <h2 class="text-lg font-bold tracking-wide">Умные инсайты FinFlow</h2>
                 </div>
-                <div id="ai-insights-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-indigo-100">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-indigo-100">
                     <div class="bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/10">
-                        <p class="text-xs text-amber-300 font-semibold tracking-wider uppercase mb-1">Сравнение бюджетов с прошлым месяцем</p>
-                        <p id="insight-expense-compare" class="font-medium text-base">Загрузка финансового анализа...</p>
+                        <p class="text-xs text-amber-300 font-semibold tracking-wider uppercase mb-1">Динамика расходов</p>
+                        <p id="insight-expense-compare" class="font-medium text-base">Анализируем данные...</p>
                     </div>
                     <div class="bg-white/10 p-4 rounded-xl backdrop-blur-sm border border-white/10">
-                        <p class="text-xs text-emerald-400 font-semibold tracking-wider uppercase mb-1">Накопления и Сбережения</p>
-                        <p id="insight-savings-compare" class="font-medium text-base">Высчитываем дельту накоплений...</p>
+                        <p class="text-xs text-emerald-400 font-semibold tracking-wider uppercase mb-1">Накопления за месяц</p>
+                        <p id="insight-savings-compare" class="font-medium text-base">Анализируем данные...</p>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Всего доходов за год</p>
+                    <div class="text-3xl font-extrabold text-emerald-600" id="kpi-total-income">0.00</div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Всего расходов за год</p>
+                    <div class="text-3xl font-extrabold text-rose-600" id="kpi-total-expense">0.00</div>
+                </div>
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-start">
-                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Уровень сбережений (Savings Rate)</span>
-                            <span class="text-xs bg-indigo-50 text-brand px-2 py-1 rounded-md font-semibold">Важный KPI</span>
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Уровень сбережений</span>
                         </div>
-                        <div class="text-3xl font-extrabold text-gray-900 mt-2" id="metric-savings-rate">0%</div>
-                        <p class="text-xs text-gray-500 mt-2">Рекомендуемая норма — от 20%. Показывает, какую часть доходов вы откладываете, а не тратите.</p>
+                        <div class="text-3xl font-extrabold text-indigo-600 mt-1" id="metric-savings-rate">0%</div>
                     </div>
                     <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden mt-4">
-                        <div id="savings-rate-bar" class="bg-brand h-full transition-all duration-500" style="width: 0%"></div>
+                        <div id="savings-rate-bar" class="bg-indigo-500 h-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                 </div>
+            </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 col-span-2">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-3">Общие доходы по валютам за год</span>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-emerald-50/60 p-4 rounded-xl border border-emerald-100 flex items-center space-x-4">
-                            <img src="https://flagcdn.com/w40/by.png" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm">
-                            <div>
-                                <p class="text-xs text-emerald-700 font-medium">Белорусский рубль</p>
-                                <p class="text-xl font-bold text-gray-900" id="total-inc-byn">0.00 Br</p>
-                            </div>
-                        </div>
-                        <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100 flex items-center space-x-4">
-                            <img src="https://flagcdn.com/w40/ru.png" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm">
-                            <div>
-                                <p class="text-xs text-blue-700 font-medium">Российский рубль</p>
-                                <p class="text-xl font-bold text-gray-900" id="total-inc-rub">0.00 ₽</p>
-                            </div>
-                        </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-2xl">
+                        <i class="ph ph-calendar-blank"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium">Средний расход в месяц</p>
+                        <p class="text-lg font-bold text-gray-900" id="stat-avg-month-spend">0.00</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center text-2xl">
+                        <i class="ph ph-shopping-bag"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium">Крупнейшая покупка</p>
+                        <p class="text-lg font-bold text-gray-900" id="stat-max-transaction">0.00</p>
+                        <p class="text-xs text-gray-500 truncate max-w-[150px]" id="stat-max-transaction-name">-</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center text-2xl">
+                        <i class="ph ph-fire"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium">Топ-1 Категория трат</p>
+                        <p class="text-lg font-bold text-gray-900 truncate max-w-[150px]" id="stat-top-category">-</p>
                     </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><i class="ph ph-trend-up text-emerald-500"></i> Доходы по месяцам за год</h3>
-                    <p class="text-xs text-gray-400 mb-4">Детализация поступлений в Br и ₽</p>
-                    <div class="h-64 relative">
+                    <h3 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><i class="ph ph-trend-up text-emerald-500"></i> Доходы по месяцам</h3>
+                    <div class="h-64 relative mt-4">
                         <canvas id="incomeMonthsChart"></canvas>
                     </div>
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><i class="ph ph-trend-down text-red-500"></i> Расходы по месяцам за год</h3>
-                    <p class="text-xs text-gray-400 mb-4">Детализация трат в Br и ₽</p>
-                    <div class="h-64 relative">
+                    <h3 class="font-bold text-gray-900 mb-1 flex items-center gap-2"><i class="ph ph-trend-down text-rose-500"></i> Расходы по месяцам</h3>
+                    <div class="h-64 relative mt-4">
                         <canvas id="expenseMonthsChart"></canvas>
                     </div>
                 </div>
@@ -160,7 +181,7 @@
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
                     <div class="mb-4">
                         <h3 class="font-bold text-gray-900 text-lg">Расходы по категориям</h3>
-                        <p class="text-xs text-gray-400">Нажмите на категорию, чтобы увидеть точные траты по подкатегориям в 2 валютах</p>
+                        <p class="text-xs text-gray-400">Нажмите на категорию, чтобы увидеть подкатегории</p>
                     </div>
                     <div id="expense-categories-list" class="space-y-3 flex-1 overflow-y-auto max-h-[450px] pr-1">
                         </div>
@@ -168,8 +189,8 @@
 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col">
                     <div class="mb-4">
-                        <h3 class="font-bold text-gray-900 text-lg">Доходы по категориям</h3>
-                        <p class="text-xs text-gray-400">Нажмите на источник дохода для просмотра подкатегорий в 2 валютах</p>
+                        <h3 class="font-bold text-gray-900 text-lg">Доходы по источникам</h3>
+                        <p class="text-xs text-gray-400">Нажмите на источник дохода для деталей</p>
                     </div>
                     <div id="income-categories-list" class="space-y-3 flex-1 overflow-y-auto max-h-[450px] pr-1">
                         </div>
@@ -211,102 +232,108 @@
         // Общая функция обработки данных и построения графиков
         function processAllAnalytics() {
             const selectedYear = parseInt(document.getElementById('year-selector').value) || 2026;
+            const selectedCurrency = document.getElementById('currency-selector').value; // Br или ₽
             
-            // Фильтруем транзакции по году
-            const currentYearTx = allTransactions.filter(t => {
+            // Фильтруем транзакции по году И ВАЛЮТЕ
+            const filteredTx = allTransactions.filter(t => {
                 const txYear = new Date(t.created_at).getFullYear();
-                return txYear === selectedYear;
+                return txYear === selectedYear && t.currency === selectedCurrency;
             });
 
-            // Инициализируем массивы месяцев по 2 валютам
-            let incBynMonths = Array(12).fill(0);
-            let incRubMonths = Array(12).fill(0);
-            let expBynMonths = Array(12).fill(0);
-            let expRubMonths = Array(12).fill(0);
+            let incMonths = Array(12).fill(0);
+            let expMonths = Array(12).fill(0);
+            let totalInc = 0;
+            let totalExp = 0;
 
-            // Общие суммы за год
-            let totalIncByn = 0;
-            let totalIncRub = 0;
-            let totalExpByn = 0;
-            let totalExpRub = 0;
-
-            // Группировка категорий
             let expenseCategories = {};
             let incomeCategories = {};
+            
+            let maxTransaction = { amount: 0, title: '' };
 
-            currentYearTx.forEach(t => {
+            filteredTx.forEach(t => {
                 const dateObj = new Date(t.created_at);
                 const monthIdx = dateObj.getMonth();
                 const amt = parseFloat(t.amount) || 0;
-                const curr = t.currency;
 
                 if (t.type === 'Доход') {
-                    if (curr === 'Br') { incBynMonths[monthIdx] += amt; totalIncByn += amt; }
-                    if (curr === '₽') { incRubMonths[monthIdx] += amt; totalIncRub += amt; }
+                    incMonths[monthIdx] += amt; 
+                    totalInc += amt;
 
-                    // Накапливаем структуру для категорий доходов
-                    if (!incomeCategories[t.category]) {
-                        incomeCategories[t.category] = { byn: 0, rub: 0, subs: {} };
-                    }
-                    if (curr === 'Br') incomeCategories[t.category].byn += amt;
-                    if (curr === '₽') incomeCategories[t.category].rub += amt;
+                    if (!incomeCategories[t.category]) { incomeCategories[t.category] = { total: 0, subs: {} }; }
+                    incomeCategories[t.category].total += amt;
 
                     const sub = t.subcategory || 'Без подкатегории';
-                    if (!incomeCategories[t.category].subs[sub]) {
-                        incomeCategories[t.category].subs[sub] = { byn: 0, rub: 0 };
-                    }
-                    if (curr === 'Br') incomeCategories[t.category].subs[sub].byn += amt;
-                    if (curr === '₽') incomeCategories[t.category].subs[sub].rub += amt;
+                    if (!incomeCategories[t.category].subs[sub]) { incomeCategories[t.category].subs[sub] = 0; }
+                    incomeCategories[t.category].subs[sub] += amt;
                 } 
                 else if (t.type === 'Расход') {
-                    if (curr === 'Br') { expBynMonths[monthIdx] += amt; totalExpByn += amt; }
-                    if (curr === '₽') { expRubMonths[monthIdx] += amt; totalExpRub += amt; }
+                    expMonths[monthIdx] += amt; 
+                    totalExp += amt;
 
-                    // Накапливаем структуру для категорий расходов
-                    if (!expenseCategories[t.category]) {
-                        expenseCategories[t.category] = { byn: 0, rub: 0, subs: {} };
-                    }
-                    if (curr === 'Br') expenseCategories[t.category].byn += amt;
-                    if (curr === '₽') expenseCategories[t.category].rub += amt;
+                    if (!expenseCategories[t.category]) { expenseCategories[t.category] = { total: 0, subs: {} }; }
+                    expenseCategories[t.category].total += amt;
 
                     const sub = t.subcategory || 'Без подкатегории';
-                    if (!expenseCategories[t.category].subs[sub]) {
-                        expenseCategories[t.category].subs[sub] = { byn: 0, rub: 0 };
+                    if (!expenseCategories[t.category].subs[sub]) { expenseCategories[t.category].subs[sub] = 0; }
+                    expenseCategories[t.category].subs[sub] += amt;
+
+                    // Поиск крупнейшей покупки
+                    if (amt > maxTransaction.amount) {
+                        maxTransaction.amount = amt;
+                        maxTransaction.title = `${t.category} (${t.subcategory || 'Без подкатегории'})`;
+                        if(t.note) maxTransaction.title += ` - ${t.note}`;
                     }
-                    if (curr === 'Br') expenseCategories[t.category].subs[sub].byn += amt;
-                    if (curr === '₽') expenseCategories[t.category].subs[sub].rub += amt;
                 }
             });
 
-            // Выводим общие цифры на экран
-            document.getElementById('total-inc-byn').innerText = totalIncByn.toFixed(2) + " Br";
-            document.getElementById('total-inc-rub').innerText = totalIncRub.toFixed(2) + " ₽";
+            // Обновление главных KPI
+            document.getElementById('kpi-total-income').innerText = `${totalInc.toFixed(2)} ${selectedCurrency}`;
+            document.getElementById('kpi-total-expense').innerText = `${totalExp.toFixed(2)} ${selectedCurrency}`;
 
-            // Расчет нормы сбережений (Savings Rate) в среднем по условной базе (переводим RUB в BYN для индекса по курсу ~0.036 для точности коэффициента)
-            const incomeInBynEquiv = totalIncByn + (totalIncRub * 0.036);
-            const expenseInBynEquiv = totalExpByn + (totalExpRub * 0.036);
+            // Уровень сбережений
             let savingsRate = 0;
-            if (incomeInBynEquiv > 0) {
-                savingsRate = ((incomeInBynEquiv - expenseInBynEquiv) / incomeInBynEquiv) * 100;
+            if (totalInc > 0) {
+                savingsRate = ((totalInc - totalExp) / totalInc) * 100;
                 if (savingsRate < 0) savingsRate = 0;
             }
             document.getElementById('metric-savings-rate').innerText = savingsRate.toFixed(1) + "%";
             document.getElementById('savings-rate-bar').style.width = Math.min(savingsRate, 100) + "%";
 
+            // Новые сводки: Крупнейшая покупка, Средний расход в месяц
+            let activeMonths = expMonths.filter(m => m > 0).length;
+            if(activeMonths === 0) activeMonths = 1; // защита от деления на ноль
+            const avgMonthly = totalExp / activeMonths;
+            document.getElementById('stat-avg-month-spend').innerText = `${avgMonthly.toFixed(2)} ${selectedCurrency}`;
+            
+            document.getElementById('stat-max-transaction').innerText = `${maxTransaction.amount.toFixed(2)} ${selectedCurrency}`;
+            document.getElementById('stat-max-transaction-name').innerText = maxTransaction.title || 'Нет данных';
+
+            // Найти топ-1 категорию
+            let topCatName = '-';
+            let topCatAmount = 0;
+            Object.keys(expenseCategories).forEach(cat => {
+                if (expenseCategories[cat].total > topCatAmount) {
+                    topCatAmount = expenseCategories[cat].total;
+                    topCatName = cat;
+                }
+            });
+            document.getElementById('stat-top-category').innerText = topCatName !== '-' ? `${topCatName} (${topCatAmount.toFixed(0)} ${selectedCurrency})` : '-';
+
+
             // Строим графики месяцев
-            buildMonthsChart('incomeMonthsChart', incBynMonths, incRubMonths, 'Доход (Br)', 'Доход (₽)', incomeChartInstance, instance => incomeChartInstance = instance);
-            buildMonthsChart('expenseMonthsChart', expBynMonths, expRubMonths, 'Расход (Br)', 'Расход (₽)', expenseChartInstance, instance => expenseChartInstance = instance);
+            buildMonthsChart('incomeMonthsChart', incMonths, `Доход (${selectedCurrency})`, 'rgba(16, 185, 129, 0.85)', incomeChartInstance, instance => incomeChartInstance = instance);
+            buildMonthsChart('expenseMonthsChart', expMonths, `Расход (${selectedCurrency})`, 'rgba(244, 63, 94, 0.85)', expenseChartInstance, instance => expenseChartInstance = instance);
 
             // Рендерим интерактивные списки категорий
-            renderCategoryDrilldown('expense-categories-list', expenseCategories, 'bg-red-500');
-            renderCategoryDrilldown('income-categories-list', incomeCategories, 'bg-emerald-500');
+            renderCategoryDrilldown('expense-categories-list', expenseCategories, 'bg-rose-500', selectedCurrency);
+            renderCategoryDrilldown('income-categories-list', incomeCategories, 'bg-emerald-500', selectedCurrency);
 
             // Генерация текстовых инсайтов относительно текущего и прошлого месяцев
-            generateTextInsights(incBynMonths, incRubMonths, expBynMonths, expRubMonths);
+            generateTextInsights(incMonths, expMonths, selectedCurrency);
         }
 
-        // Построитель графиков Chart.js
-        function buildMonthsChart(canvasId, bynData, rubData, labelByn, labelRub, existingInstance, setInstance) {
+        // Построитель графиков Chart.js (теперь с одним датасетом под выбранную валюту)
+        function buildMonthsChart(canvasId, dataArr, labelText, color, existingInstance, setInstance) {
             if (existingInstance) { existingInstance.destroy(); }
             
             const ctx = document.getElementById(canvasId).getContext('2d');
@@ -316,15 +343,9 @@
                     labels: monthNames,
                     datasets: [
                         {
-                            label: labelByn,
-                            data: bynData,
-                            backgroundColor: 'rgba(16, 185, 129, 0.85)',
-                            borderRadius: 6,
-                        },
-                        {
-                            label: labelRub,
-                            data: rubData,
-                            backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                            label: labelText,
+                            data: dataArr,
+                            backgroundColor: color,
                             borderRadius: 6,
                         }
                     ]
@@ -332,7 +353,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+                    plugins: { legend: { display: false } }, // Скрыли легенду, так как валюта теперь одна
                     scales: {
                         y: { grid: { color: '#f3f4f6' }, ticks: { font: { size: 10 } } },
                         x: { grid: { display: false }, ticks: { font: { size: 10 } } }
@@ -342,49 +363,39 @@
             setInstance(newInstance);
         }
 
-        // Рендеринг Категорий / Подкатегорий (Drill-down клик)
-        function renderCategoryDrilldown(containerId, categoriesObj, barColorClass) {
+        // Рендеринг Категорий / Подкатегорий
+        function renderCategoryDrilldown(containerId, categoriesObj, barColorClass, currencySymbol) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
 
-            const categoriesSorted = Object.keys(categoriesObj).sort((a,b) => {
-                // сортировка по суммарному весу (условно BYN + RUB/25)
-                const weightA = categoriesObj[a].byn + (categoriesObj[a].rub * 0.036);
-                const weightB = categoriesObj[b].byn + (categoriesObj[b].rub * 0.036);
-                return weightB - weightA;
-            });
+            const categoriesSorted = Object.keys(categoriesObj).sort((a,b) => categoriesObj[b].total - categoriesObj[a].total);
 
             if (categoriesSorted.length === 0) {
-                container.innerHTML = `<p class="text-sm text-gray-400 py-4 text-center">Нет транзакций по категориям за этот год</p>`;
+                container.innerHTML = `<p class="text-sm text-gray-400 py-4 text-center">Нет транзакций в этой валюте</p>`;
                 return;
             }
+
+            const maxTotal = categoriesObj[categoriesSorted[0]].total; // Для расчета % ширины полоски
 
             categoriesSorted.forEach((catName, idx) => {
                 const cat = categoriesObj[catName];
                 const catId = `${containerId}-cat-${idx}`;
                 
-                // Строка отображения сумм категории
-                let sumStr = [];
-                if (cat.byn > 0) sumStr.push(`${cat.byn.toFixed(2)} Br`);
-                if (cat.rub > 0) sumStr.push(`${cat.rub.toFixed(2)} ₽`);
-                if (sumStr.length === 0) sumStr.push('0.00');
-
                 // Генерация подкатегорий
                 let subsHtml = '';
-                Object.keys(cat.subs).forEach(subName => {
-                    const sub = cat.subs[subName];
-                    let subSumStr = [];
-                    if (sub.byn > 0) subSumStr.push(`${sub.byn.toFixed(2)} Br`);
-                    if (sub.rub > 0) subSumStr.push(`${sub.rub.toFixed(2)} ₽`);
-                    if (subSumStr.length === 0) subSumStr.push('0.00');
+                const subsSorted = Object.keys(cat.subs).sort((a,b) => cat.subs[b] - cat.subs[a]);
 
+                subsSorted.forEach(subName => {
+                    const subAmount = cat.subs[subName];
                     subsHtml += `
                         <div class="flex justify-between items-center text-xs text-gray-600 bg-gray-50/50 p-2 rounded-lg border border-gray-100 pl-4">
                             <span class="flex items-center gap-1.5"><i class="ph ph-corner-down-right text-gray-400"></i> ${subName}</span>
-                            <span class="font-semibold text-gray-700">${subSumStr.join(' / ')}</span>
+                            <span class="font-semibold text-gray-700">${subAmount.toFixed(2)} ${currencySymbol}</span>
                         </div>
                     `;
                 });
+
+                const barWidth = (cat.total / maxTotal) * 100;
 
                 const blockHtml = `
                     <div class="border border-gray-100 rounded-xl overflow-hidden shadow-sm bg-white">
@@ -392,16 +403,15 @@
                             <div class="flex-1 min-w-0 pr-4">
                                 <div class="flex justify-between items-center mb-1">
                                     <span class="font-bold text-gray-900 truncate text-sm sm:text-base">${catName}</span>
-                                    <span class="font-bold text-gray-900 text-sm whitespace-nowrap ml-2">${sumStr.join(' / ')}</span>
+                                    <span class="font-bold text-gray-900 text-sm whitespace-nowrap ml-2">${cat.total.toFixed(2)} ${currencySymbol}</span>
                                 </div>
                                 <div class="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                                    <div class="${barColorClass} h-full" style="width: 75%"></div>
+                                    <div class="${barColorClass} h-full" style="width: ${barWidth}%"></div>
                                 </div>
                             </div>
                             <i class="ph ph-caret-down text-gray-400 ml-1"></i>
                         </button>
                         <div id="${catId}" class="hidden p-3 bg-slate-50/30 border-t border-gray-50 space-y-2">
-                            <p class="text-[10px] uppercase font-bold tracking-wider text-gray-400 mb-1 pl-1">Разбивка по подкатегориям:</p>
                             ${subsHtml}
                         </div>
                     </div>
@@ -412,60 +422,47 @@
 
         function toggleElement(id) {
             const el = document.getElementById(id);
-            if (el.classList.contains('hidden')) {
-                el.classList.remove('hidden');
-            } else {
-                el.classList.add('hidden');
-            }
+            el.classList.toggle('hidden');
         }
 
         // Умная текстовая аналитика относительно месяцев
-        function generateTextInsights(incByn, incRub, expByn, expRub) {
+        function generateTextInsights(incMonths, expMonths, currency) {
             const currentMonthIdx = new Date().getMonth(); // Текущий месяц
             const prevMonthIdx = currentMonthIdx === 0 ? 11 : currentMonthIdx - 1; // Предыдущий месяц
 
-            // Считаем расходы текущего и прошлого в эквиваленте (для чистоты процентов)
-            const currentExpTotal = expByn[currentMonthIdx] + (expRub[currentMonthIdx] * 0.036);
-            const prevExpTotal = expByn[prevMonthIdx] + (expRub[prevMonthIdx] * 0.036);
+            const currentExpTotal = expMonths[currentMonthIdx];
+            const prevExpTotal = expMonths[prevMonthIdx];
 
             let expenseText = "";
             if (prevExpTotal === 0) {
-                expenseText = `В текущем месяце (${monthNames[currentMonthIdx]}) вы потратили ${expByn[currentMonthIdx].toFixed(2)} Br и ${expRub[currentMonthIdx].toFixed(2)} ₽. Данных за прошлый месяц для вычисления % пока недостаточно.`;
+                expenseText = `В этом месяце вы потратили ${currentExpTotal.toFixed(2)} ${currency}. Не хватает истории за прошлый месяц для вычисления %.`;
             } else {
                 const diffExp = currentExpTotal - prevExpTotal;
                 const pctExp = Math.abs((diffExp / prevExpTotal) * 100).toFixed(0);
                 
                 if (diffExp > 0) {
-                    expenseText = `Вы потратили в этом месяце на <span class="text-rose-400 font-bold">+${pctExp}% больше</span>, чем в прошлом. Контролируйте импульсивные расходы!`;
+                    expenseText = `Вы потратили в этом месяце на <span class="text-rose-400 font-bold">+${pctExp}% больше</span>, чем в прошлом.`;
                 } else {
-                    expenseText = `Отличный результат! Вы потратили на <span class="text-emerald-400 font-bold">${pctExp}% меньше</span>, чем в прошлом месяце. Бюджет в безопасности.`;
+                    expenseText = `Отличный результат! Вы потратили на <span class="text-emerald-400 font-bold">${pctExp}% меньше</span>, чем в прошлом месяце.`;
                 }
             }
             document.getElementById('insight-expense-compare').innerHTML = expenseText;
 
-            // Расчет чистых накоплений (Доход - Расход) за текущий и прошлый месяцы
-            const currentSavingsByn = incByn[currentMonthIdx] - expByn[currentMonthIdx];
-            const currentSavingsRub = incRub[currentMonthIdx] - expRub[currentMonthIdx];
-            
-            const prevSavingsByn = incByn[prevMonthIdx] - expByn[prevMonthIdx];
-            const prevSavingsRub = incRub[prevMonthIdx] - expRub[prevMonthIdx];
-
-            const currentSavingsEquiv = currentSavingsByn + (currentSavingsRub * 0.036);
-            const prevSavingsEquiv = prevSavingsByn + (prevSavingsRub * 0.036);
+            // Расчет чистых накоплений
+            const currentSavings = incMonths[currentMonthIdx] - expMonths[currentMonthIdx];
+            const prevSavings = incMonths[prevMonthIdx] - expMonths[prevMonthIdx];
 
             let savingsText = "";
-            let savingsFormatted = `${currentSavingsByn >= 0 ? '+' : ''}${currentSavingsByn.toFixed(2)} Br / ${currentSavingsRub >= 0 ? '+' : ''}${currentSavingsRub.toFixed(2)} ₽`;
-
-            if (prevSavingsEquiv <= 0) {
-                savingsText = `Чистая дельта за месяц: <span class="text-emerald-400 font-bold">${savingsFormatted}</span>. Копите подушку безопасности!`;
+            if (prevSavings <= 0) {
+                savingsText = `Дельта текущего месяца: <span class="text-emerald-400 font-bold">${currentSavings >= 0 ? '+' : ''}${currentSavings.toFixed(2)} ${currency}</span>.`;
             } else {
-                const diffSav = currentSavingsEquiv - prevSavingsEquiv;
-                const pctSav = ((diffSav / Math.abs(prevSavingsEquiv)) * 100).toFixed(0);
+                const diffSav = currentSavings - prevSavings;
+                const pctSav = ((diffSav / Math.abs(prevSavings)) * 100).toFixed(0);
                 
                 if (diffSav > 0) {
-                    savingsText = `Вы отложили на <span class="text-emerald-400 font-bold">+${pctSav}% больше</span> средств (${savingsFormatted}), чем в прошлом месяце. Динамика капитала положительная.`;
+                    savingsText = `Вы отложили на <span class="text-emerald-400 font-bold">+${pctSav}% больше</span> средств, чем в прошлом месяце.`;
                 } else {
-                    savingsText = `Скорость накоплений упала на <span class="text-amber-400 font-bold">${Math.abs(pctSav)}%</span> в сравнении с прошлым месяцем. Сделайте упор на оптимизацию трат.`;
+                    savingsText = `Накопления упали на <span class="text-amber-400 font-bold">${Math.abs(pctSav)}%</span> в сравнении с прошлым месяцем.`;
                 }
             }
             document.getElementById('insight-savings-compare').innerHTML = savingsText;
