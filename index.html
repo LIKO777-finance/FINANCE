@@ -43,19 +43,22 @@
                 <span class="text-xl font-bold text-gray-900">FinFlow</span>
             </div>
             <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
-    <a href="index.html" class="flex items-center gap-3 px-3 py-2 bg-brand-light text-brand font-medium rounded-lg">
-        <i class="ph ph-wallet text-xl"></i>Счета
-    </a>
-    <a href="operations.html" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
-        <i class="ph ph-list-dashes text-xl"></i>Операции
-    </a>
-    <a href="budgets.html" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
-        <i class="ph ph-chart-pie-slice text-xl"></i>Бюджеты
-    </a>
-    <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
-        <i class="ph ph-trend-up text-xl"></i>Аналитика
-    </a>
-</nav>
+                <a href="index.html" class="flex items-center gap-3 px-3 py-2 bg-brand-light text-brand font-medium rounded-lg">
+                    <i class="ph ph-wallet text-xl"></i>Счета
+                </a>
+                <a href="operations.html" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <i class="ph ph-list-dashes text-xl"></i>Операции
+                </a>
+                <a href="investments.html" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <i class="ph ph-chart-line text-xl"></i>Инвестиции
+                </a>
+                <a href="budgets.html" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <i class="ph ph-chart-pie-slice text-xl"></i>Бюджеты
+                </a>
+                <a href="analytics.html" class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                    <i class="ph ph-trend-up text-xl"></i>Аналитика
+                </a>
+            </nav>
         </div>
         <div class="p-4 border-t border-gray-200 m-4 flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-xl transition">
             <img src="https://ui-avatars.com/api/?name=Андрей+Иванов&background=random" alt="Avatar" class="w-10 h-10 rounded-full" />
@@ -456,7 +459,6 @@
             const rateHint = document.getElementById('transfer-rate-hint');
             const rateInput = document.getElementById('transfer-rate');
 
-            // Принудительно выставляем микрошаг при любом обновлении меток
             rateInput.setAttribute('step', '0.000000001');
 
             if (!fromId) { amountBadge.innerText = '?'; feeBadge.innerText = '?'; rateHint.innerText = ''; return; }
