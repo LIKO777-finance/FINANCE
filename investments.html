@@ -155,34 +155,53 @@
             <p class="text-xs text-gray-500 mb-4">Расчетный план выплат (купоны и дивиденды) на ближайшее время исходя из текущего портфеля.</p>
             
             <div class="space-y-3" id="monthly-stats-container">
-                <!-- Сюда будет рендериться статистика -->
+                <!-- Сюда рендерится статистика -->
             </div>
         </div>
     </aside>
 
     <!-- Модальное окно "Новая сделка" -->
     <div id="deal-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 transition-opacity p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 transform scale-95 transition-transform" id="deal-modal-content">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 transform scale-95 transition-transform overflow-visible" id="deal-modal-content">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-gray-900">Добавить актив</h3>
                 <button onclick="closeDealModal()" class="text-gray-400 hover:text-gray-700 transition">
                     <i class="ph ph-x text-2xl"></i>
                 </button>
             </div>
+
+            <!-- Поиск MOEX -->
+            <div class="mb-5 relative">
+                <label class="block text-sm font-semibold text-indigo-900 mb-1">Автозаполнение по бирже MOEX</label>
+                <div class="relative">
+                    <input type="text" id="deal-search-moex" oninput="handleMoexSearch(this.value)" autocomplete="off" placeholder="Введите название или тикер (напр. ОФЗ 26246, SBER)..." class="w-full px-4 py-2.5 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-indigo-50/40 pl-10 text-sm">
+                    <i class="ph ph-magnifying-glass absolute left-3 top-3 text-indigo-500 text-lg"></i>
+                    <div id="moex-spinner" class="hidden absolute right-3 top-3">
+                        <i class="ph ph-spinner animate-spin text-indigo-600 text-lg"></i>
+                    </div>
+                </div>
+                <!-- Выпадающие результаты поиска MOEX -->
+                <div id="moex-results" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto divide-y divide-gray-100"></div>
+            </div>
             
             <form onsubmit="submitDeal(event)" class="space-y-4" id="deal-form">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Дата сделки</label>
+                    <input type="date" id="deal-date" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white text-sm">
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="col-span-2 sm:col-span-1">
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Тип актива</label>
-                        <select id="deal-type" required onchange="toggleBondFields()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                        <select id="deal-type" required onchange="toggleBondFields()" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white text-sm">
                             <option value="Акция">Акция</option>
                             <option value="Облигация">Облигация</option>
                             <option value="Фонд">Фонд (ETF/ПИФ)</option>
                         </select>
                     </div>
-                    <div class="col-span-2 sm:col-span-1">
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Валюта</label>
-                        <select id="deal-currency" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                        <select id="deal-currency" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white text-sm">
                             <option value="₽">₽ (RUB)</option>
                             <option value="Br">Br (BYN)</option>
                             <option value="$">$ (USD)</option>
@@ -194,43 +213,43 @@
                 <div class="grid grid-cols-3 gap-4">
                     <div class="col-span-1">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Тикер</label>
-                        <input type="text" id="deal-ticker" placeholder="SBER" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition uppercase">
+                        <input type="text" id="deal-ticker" placeholder="SBER" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition uppercase text-sm">
                     </div>
                     <div class="col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Название бумаги</label>
-                        <input type="text" id="deal-name" required placeholder="Сбербанк ао" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition">
+                        <input type="text" id="deal-name" required placeholder="Сбербанк ао" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-sm">
                     </div>
                 </div>
                 
                 <div class="grid grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Количество</label>
-                        <input type="number" id="deal-qty" required placeholder="10" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition">
+                        <input type="number" id="deal-qty" required placeholder="10" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-sm">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Цена покупки</label>
-                        <input type="number" id="deal-buy-price" required placeholder="0.00" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition">
+                        <input type="number" id="deal-buy-price" required placeholder="0.00" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-sm">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Текущая цена</label>
-                        <input type="number" id="deal-curr-price" required placeholder="0.00" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition">
+                        <input type="number" id="deal-curr-price" required placeholder="0.00" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-sm">
                     </div>
                 </div>
 
-                <!-- Блок для облигаций (скрыт по умолчанию) -->
+                <!-- Блок для облигаций -->
                 <div id="bond-fields" class="hidden bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Дата погашения</label>
-                        <input type="date" id="deal-maturity" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                        <input type="date" id="deal-maturity" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white text-sm">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Размер купона (на 1 шт)</label>
-                            <input type="number" id="deal-coupon" placeholder="0.00" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Купон (на 1 бумагу)</label>
+                            <input type="number" id="deal-coupon" placeholder="0.00" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-sm">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Выплат в год</label>
-                            <select id="deal-payouts" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white">
+                            <select id="deal-payouts" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white text-sm">
                                 <option value="1">1 раз (Год)</option>
                                 <option value="2" selected>2 раза (Полугодие)</option>
                                 <option value="4">4 раза (Квартал)</option>
@@ -255,7 +274,7 @@
         let investmentsData = [];
         let currentTab = 'Все активы';
 
-        // Форматирование чисел: пробел как разделитель тысяч (напр. 117 568,85)
+        // Форматирование денег с пробелами (например, 117 568,85 ₽)
         const formatMoney = (amount, currency = '₽', hideCurrency = false) => {
             const formatted = Number(amount).toLocaleString('ru-RU', { 
                 minimumFractionDigits: 2, 
@@ -264,7 +283,6 @@
             return hideCurrency ? formatted : `${formatted} ${currency}`;
         };
 
-        // Форматирование даты
         const formatDate = (dateString) => {
             if (!dateString) return '';
             const options = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -290,12 +308,18 @@
             }
         }
 
-        // Логика модального окна
+        // Модальное окно
         const dealModal = document.getElementById('deal-modal');
         const dealModalContent = document.getElementById('deal-modal-content');
 
         function openDealModal() {
             document.getElementById('deal-form').reset();
+            document.getElementById('deal-search-moex').value = '';
+            document.getElementById('moex-results').classList.add('hidden');
+            
+            // По умолчанию дата сделки — сегодня
+            document.getElementById('deal-date').value = new Date().toISOString().split('T')[0];
+            
             toggleBondFields();
             dealModal.classList.remove('hidden'); dealModal.classList.add('flex');
             setTimeout(() => { dealModalContent.classList.remove('scale-95'); dealModalContent.classList.add('scale-100'); }, 10);
@@ -320,11 +344,176 @@
             }
         }
 
+        // Интеграция с MOEX ISS API (Поиск)
+        let searchDebounce = null;
+        function handleMoexSearch(val) {
+            clearTimeout(searchDebounce);
+            const resultsDiv = document.getElementById('moex-results');
+            const spinner = document.getElementById('moex-spinner');
+            
+            if (!val || val.trim().length < 2) {
+                resultsDiv.classList.add('hidden');
+                resultsDiv.innerHTML = '';
+                spinner.classList.add('hidden');
+                return;
+            }
+
+            spinner.classList.remove('hidden');
+            searchDebounce = setTimeout(async () => {
+                try {
+                    const resp = await fetch(`https://iss.moex.com/iss/securities.json?q=${encodeURIComponent(val)}&is_trading=1&limit=8`);
+                    const data = await resp.json();
+                    
+                    const cols = data.securities.columns;
+                    const rows = data.securities.data;
+                    const secidIdx = cols.indexOf('secid');
+                    const nameIdx = cols.indexOf('name');
+                    const shortnameIdx = cols.indexOf('shortname');
+                    const groupIdx = cols.indexOf('group');
+
+                    spinner.classList.add('hidden');
+                    if (!rows || rows.length === 0) {
+                        resultsDiv.innerHTML = '<div class="p-3 text-xs text-gray-400 text-center">Ничего не найдено</div>';
+                        resultsDiv.classList.remove('hidden');
+                        return;
+                    }
+
+                    resultsDiv.innerHTML = rows.map(r => {
+                        const secid = r[secidIdx];
+                        const name = r[nameIdx] || r[shortnameIdx];
+                        const group = r[groupIdx] || '';
+                        let typeLabel = 'Акция';
+                        if (group.includes('bond')) typeLabel = 'Облигация';
+                        else if (group.includes('ppif') || group.includes('etf')) typeLabel = 'Фонд';
+
+                        return `
+                            <div onclick="selectMoexSecurity('${secid}')" class="p-3 hover:bg-indigo-50 cursor-pointer transition flex justify-between items-center text-sm">
+                                <div>
+                                    <div class="font-semibold text-gray-900">${name}</div>
+                                    <div class="text-xs text-gray-400 flex items-center gap-2 mt-0.5">
+                                        <span class="font-mono text-indigo-600 font-bold">${secid}</span>
+                                        <span>•</span>
+                                        <span>${typeLabel}</span>
+                                    </div>
+                                </div>
+                                <i class="ph ph-caret-right text-gray-400"></i>
+                            </div>
+                        `;
+                    }).join('');
+                    resultsDiv.classList.remove('hidden');
+                } catch (err) {
+                    console.error("MOEX search error:", err);
+                    spinner.classList.add('hidden');
+                }
+            }, 300);
+        }
+
+        // Загрузка детальных спецификаций с Мосбиржи
+        async function selectMoexSecurity(secid) {
+            document.getElementById('moex-results').classList.add('hidden');
+            document.getElementById('deal-search-moex').value = secid;
+
+            const spinner = document.getElementById('moex-spinner');
+            spinner.classList.remove('hidden');
+
+            try {
+                const resp = await fetch(`https://iss.moex.com/iss/securities/${secid}.json`);
+                const data = await resp.json();
+
+                const descCols = data.description.columns;
+                const descRows = data.description.data;
+                const nameIdx = descCols.indexOf('name');
+                const valIdx = descCols.indexOf('value');
+
+                const desc = {};
+                descRows.forEach(r => desc[r[nameIdx]] = r[valIdx]);
+
+                // Рыночная цена с досок торгов
+                let pricePctOrRub = 0;
+                if (data.boards && data.boards.data) {
+                    const bCols = data.boards.columns;
+                    const bRows = data.boards.data;
+                    const lastIdx = bCols.indexOf('LAST');
+                    const prevWapIdx = bCols.indexOf('PREVWAPPRICE');
+                    const prevPriceIdx = bCols.indexOf('PREVPRICE');
+
+                    for (let r of bRows) {
+                        const p = r[lastIdx] || r[prevWapIdx] || r[prevPriceIdx];
+                        if (p) {
+                            pricePctOrRub = parseFloat(p);
+                            break;
+                        }
+                    }
+                }
+
+                const group = desc.GROUP || '';
+                const isBond = group.includes('stock_bonds') || group.includes('bond');
+                const isFund = group.includes('ppif') || group.includes('etf');
+
+                // Автоматическое заполнение
+                document.getElementById('deal-ticker').value = desc.SECID || secid;
+                document.getElementById('deal-name').value = desc.NAME || desc.SHORTNAME || secid;
+                document.getElementById('deal-currency').value = '₽';
+
+                if (isBond) {
+                    document.getElementById('deal-type').value = 'Облигация';
+                    toggleBondFields();
+
+                    const faceValue = parseFloat(desc.FACEVALUE) || 1000;
+                    // Для облигаций цена на бирже задается в % от номинала
+                    const actualPrice = pricePctOrRub ? (pricePctOrRub / 100) * faceValue : faceValue;
+                    
+                    document.getElementById('deal-curr-price').value = actualPrice.toFixed(2);
+                    document.getElementById('deal-buy-price').value = actualPrice.toFixed(2);
+
+                    if (desc.MATDATE) document.getElementById('deal-maturity').value = desc.MATDATE;
+                    if (desc.COUPONVALUE) document.getElementById('deal-coupon').value = parseFloat(desc.COUPONVALUE);
+                    
+                    if (desc.COUPONPERIOD) {
+                        const days = parseFloat(desc.COUPONPERIOD);
+                        let payouts = 2;
+                        if (days > 300) payouts = 1;
+                        else if (days > 140) payouts = 2;
+                        else if (days > 70) payouts = 4;
+                        else payouts = 12;
+                        document.getElementById('deal-payouts').value = payouts.toString();
+                    }
+                } else if (isFund) {
+                    document.getElementById('deal-type').value = 'Фонд';
+                    toggleBondFields();
+                    if(pricePctOrRub) {
+                        document.getElementById('deal-curr-price').value = pricePctOrRub.toFixed(2);
+                        document.getElementById('deal-buy-price').value = pricePctOrRub.toFixed(2);
+                    }
+                } else {
+                    document.getElementById('deal-type').value = 'Акция';
+                    toggleBondFields();
+                    if(pricePctOrRub) {
+                        document.getElementById('deal-curr-price').value = pricePctOrRub.toFixed(2);
+                        document.getElementById('deal-buy-price').value = pricePctOrRub.toFixed(2);
+                    }
+                }
+
+            } catch (err) {
+                console.error("Ошибка загрузки MOEX:", err);
+            } finally {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // Закрывать выпадающий список при клике вне его
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#deal-search-moex') && !e.target.closest('#moex-results')) {
+                document.getElementById('moex-results')?.classList.add('hidden');
+            }
+        });
+
         async function submitDeal(e) {
             e.preventDefault();
             const btn = document.getElementById('deal-submit-btn'); 
             btn.innerText = 'Сохранение...'; btn.disabled = true;
             
+            const dealDate = document.getElementById('deal-date').value;
             const type = document.getElementById('deal-type').value;
             const qty = parseFloat(document.getElementById('deal-qty').value) || 0;
             const buyPrice = parseFloat(document.getElementById('deal-buy-price').value) || 0;
@@ -339,11 +528,11 @@
                 couponSize = parseFloat(document.getElementById('deal-coupon').value) || 0;
                 payouts = parseInt(document.getElementById('deal-payouts').value) || 0;
                 maturity = document.getElementById('deal-maturity').value || null;
-                // Расчет пассивного дохода в месяц для этой позиции
                 monthlyIncome = (couponSize * payouts * qty) / 12;
             }
 
             const payload = {
+                created_at: dealDate ? new Date(dealDate).toISOString() : new Date().toISOString(),
                 asset_type: type,
                 currency: document.getElementById('deal-currency').value,
                 ticker: document.getElementById('deal-ticker').value.toUpperCase(),
@@ -362,7 +551,7 @@
             btn.innerText = 'Сохранить в портфель'; btn.disabled = false;
             
             if (error) {
-                alert('Ошибка: ' + error.message);
+                alert('Ошибка сохранения: ' + error.message);
             } else { 
                 closeDealModal(); 
                 fetchInvestments(); 
@@ -387,7 +576,6 @@
             renderList(); 
         }
 
-        // Рендер HTML для одного актива
         function createAssetHTML(asset) {
             const invested = asset.quantity * asset.average_buy_price;
             const currentVal = asset.quantity * asset.current_price;
@@ -441,7 +629,7 @@
 
         function renderBalancesHTML(totalsObj) {
             const keys = Object.keys(totalsObj).filter(k => Math.abs(totalsObj[k]) > 0.01);
-            if (keys.length === 0) return `<div class="text-lg font-bold text-gray-900">0.00 ₽</div>`;
+            if (keys.length === 0) return `<div class="text-lg font-bold text-gray-900">0,00 ₽</div>`;
 
             const priority = ['₽', 'Br', '$', '€'];
             keys.sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
@@ -455,7 +643,6 @@
             </div>`;
         }
 
-        // Рендер ежемесячной статистики (виджет с разбивкой)
         function renderMonthlyStats(passiveTotals) {
             const container = document.getElementById('monthly-stats-container');
             const keys = Object.keys(passiveTotals).filter(k => passiveTotals[k] > 0);
@@ -468,12 +655,10 @@
                 return;
             }
 
-            // Создаем массив с названиями месяцев (начиная с текущего)
             const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
             const currentMonthIdx = new Date().getMonth();
             
             let html = '';
-            // Выводим 3 ближайших месяца для статистики
             for(let i = 0; i < 3; i++) {
                 const monthName = months[(currentMonthIdx + i) % 12];
                 const isCurrent = i === 0;
@@ -540,7 +725,6 @@
             document.getElementById('widget-current').innerHTML = renderBalancesHTML(totals.current);
             document.getElementById('widget-profit').innerHTML = renderBalancesHTML(totals.profit);
             
-            // Специальный рендер для пассивного дохода на темном фоне
             const passiveKeys = Object.keys(totals.passive).filter(k => totals.passive[k] > 0);
             if (passiveKeys.length > 0) {
                 const pPri = ['₽', 'Br', '$', '€'];
@@ -550,7 +734,7 @@
                         ${passiveKeys.map(k => `<div class="text-xl">${formatMoney(totals.passive[k], k)}</div>`).join('')}
                     </div>`;
             } else {
-                document.getElementById('widget-passive').innerHTML = '<div class="text-xl mt-1">0.00 ₽</div>';
+                document.getElementById('widget-passive').innerHTML = '<div class="text-xl mt-1">0,00 ₽</div>';
             }
 
             renderMonthlyStats(totals.passive);
