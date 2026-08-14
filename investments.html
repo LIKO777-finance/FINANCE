@@ -230,10 +230,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Валюта</label>
                         <select id="deal-currency" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white text-sm">
-                            <option value="₽">₽ (RUB)</option>
-                            <option value="Br">Br (BYN)</option>
-                            <option value="$">$ (USD)</option>
-                            <option value="€">€ (EUR)</option>
+                            <option value="₽" selected>₽ (RUB)</option>
                         </select>
                     </div>
                 </div>
@@ -328,7 +325,6 @@
                 if (error) throw error;
                 investmentsData = data || [];
                 
-                // Автоматическое обновление цен с Мосбиржи в фоне для актуальности
                 await updatePricesFromMoex();
                 render(); 
             } catch (error) {
@@ -340,43 +336,77 @@
             }
         }
 
-        // Автоматическое обновление текущих цен с Мосбиржи для уже сохраненных тикеров
+        // --- НОВАЯ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ РЕАЛЬНОЙ ЦЕНЫ ---
+        async function fetchMoexPrice(secid) {
+            try {
+                const resp = await fetch(`https://iss.moex.com/iss/engines/stock/securities/${secid}.json`);
+                const data = await resp.json();
+                let price = 0;
+
+                // 1. Ищем последнюю цену сделки (если торги идут)
+                if (data.marketdata && data.marketdata.data) {
+                    const cols = data.marketdata.columns;
+                    const rows = data.marketdata.data;
+                    const lastIdx = cols.indexOf('LAST');
+                    
+                    for (let r of rows) {
+                        if (r[lastIdx] !== null && r[lastIdx] > 0) {
+                            price = parseFloat(r[lastIdx]);
+                            break;
+                        }
+                    }
+                }
+
+                // 2. Если торги закрыты (цена 0), ищем цену предыдущего закрытия
+                if (price === 0 && data.securities && data.securities.data) {
+                    const cols = data.securities.columns;
+                    const rows = data.securities.data;
+                    const prevIdx = cols.indexOf('PREVPRICE');
+                    const closeIdx = cols.indexOf('LEGALCLOSEPRICE');
+
+                    for (let r of rows) {
+                        const p = r[prevIdx] || r[closeIdx];
+                        if (p !== null && p > 0) {
+                            price = parseFloat(p);
+                            break;
+                        }
+                    }
+                }
+                return price;
+            } catch (e) {
+                console.error('Ошибка получения цены:', e);
+                return 0;
+            }
+        }
+
+        // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ФОНОВОГО ПЕРЕСЧЕТА ЦЕН ---
         async function updatePricesFromMoex() {
             for (let item of investmentsData) {
                 if (!item.ticker) continue;
                 try {
-                    const resp = await fetch(`https://iss.moex.com/iss/securities/${item.ticker}.json`);
-                    const data = await resp.json();
-                    if (data.boards && data.boards.data) {
-                        const bCols = data.boards.columns;
-                        const bRows = data.boards.data;
-                        const lastIdx = bCols.indexOf('LAST');
-                        const prevWapIdx = bCols.indexOf('PREVWAPPRICE');
-                        const prevPriceIdx = bCols.indexOf('PREVPRICE');
-
-                        let price = 0;
-                        for (let r of bRows) {
-                            const p = r[lastIdx] || r[prevWapIdx] || r[prevPriceIdx];
-                            if (p) { price = parseFloat(p); break; }
-                        }
-
-                        if (price > 0) {
-                            if (item.asset_type === 'Облигация') {
-                                const descCols = data.description.columns;
-                                const descRows = data.description.data;
+                    const pricePctOrRub = await fetchMoexPrice(item.ticker);
+                    
+                    if (pricePctOrRub > 0) {
+                        if (item.asset_type === 'Облигация') {
+                            const descResp = await fetch(`https://iss.moex.com/iss/securities/${item.ticker}.json`);
+                            const descData = await descResp.json();
+                            let faceValue = 1000;
+                            if (descData.description) {
+                                const descCols = descData.description.columns;
+                                const descRows = descData.description.data;
                                 const nameIdx = descCols.indexOf('name');
                                 const valIdx = descCols.indexOf('value');
                                 const desc = {};
                                 descRows.forEach(r => desc[r[nameIdx]] = r[valIdx]);
-                                const faceValue = parseFloat(desc.FACEVALUE) || 1000;
-                                item.current_price = (price / 100) * faceValue;
-                            } else {
-                                item.current_price = price;
+                                faceValue = parseFloat(desc.FACEVALUE) || 1000;
                             }
+                            item.current_price = (pricePctOrRub / 100) * faceValue;
+                        } else {
+                            item.current_price = pricePctOrRub;
                         }
                     }
                 } catch (e) {
-                    // Игнорируем ошибки сети по отдельным тикерам, оставляя старую цену
+                    console.error("Ошибка обновления цены:", e);
                 }
             }
         }
@@ -477,6 +507,7 @@
             }, 300);
         }
 
+        // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ВЫБОРА БУМАГИ ---
         async function selectMoexSecurity(secid) {
             document.getElementById('moex-results').classList.add('hidden');
             document.getElementById('deal-search-moex').value = secid;
@@ -485,30 +516,20 @@
             spinner.classList.remove('hidden');
 
             try {
-                const resp = await fetch(`https://iss.moex.com/iss/securities/${secid}.json`);
-                const data = await resp.json();
+                // Получаем описание бумаги
+                const descResp = await fetch(`https://iss.moex.com/iss/securities/${secid}.json`);
+                const descData = await descResp.json();
 
-                const descCols = data.description.columns;
-                const descRows = data.description.data;
+                const descCols = descData.description.columns;
+                const descRows = descData.description.data;
                 const nameIdx = descCols.indexOf('name');
                 const valIdx = descCols.indexOf('value');
 
                 const desc = {};
                 descRows.forEach(r => desc[r[nameIdx]] = r[valIdx]);
 
-                let pricePctOrRub = 0;
-                if (data.boards && data.boards.data) {
-                    const bCols = data.boards.columns;
-                    const bRows = data.boards.data;
-                    const lastIdx = bCols.indexOf('LAST');
-                    const prevWapIdx = bCols.indexOf('PREVWAPPRICE');
-                    const prevPriceIdx = bCols.indexOf('PREVPRICE');
-
-                    for (let r of bRows) {
-                        const p = r[lastIdx] || r[prevWapIdx] || r[prevPriceIdx];
-                        if (p) { pricePctOrRub = parseFloat(p); break; }
-                    }
-                }
+                // Получаем РЕАЛЬНУЮ цену новым методом
+                const pricePctOrRub = await fetchMoexPrice(secid);
 
                 const group = desc.GROUP || '';
                 const isBond = group.includes('stock_bonds') || group.includes('bond');
@@ -523,7 +544,8 @@
                     toggleBondFields();
 
                     const faceValue = parseFloat(desc.FACEVALUE) || 1000;
-                    const actualPrice = pricePctOrRub ? (pricePctOrRub / 100) * faceValue : faceValue;
+                    // Если цена найдена, считаем % от номинала. Если вдруг нет - ставим номинал.
+                    const actualPrice = pricePctOrRub > 0 ? (pricePctOrRub / 100) * faceValue : faceValue;
                     
                     document.getElementById('deal-curr-price').value = actualPrice.toFixed(2);
                     document.getElementById('deal-buy-price').value = actualPrice.toFixed(2);
@@ -543,14 +565,14 @@
                 } else if (isFund) {
                     document.getElementById('deal-type').value = 'Фонд';
                     toggleBondFields();
-                    if(pricePctOrRub) {
+                    if(pricePctOrRub > 0) {
                         document.getElementById('deal-curr-price').value = pricePctOrRub.toFixed(2);
                         document.getElementById('deal-buy-price').value = pricePctOrRub.toFixed(2);
                     }
                 } else {
                     document.getElementById('deal-type').value = 'Акция';
                     toggleBondFields();
-                    if(pricePctOrRub) {
+                    if(pricePctOrRub > 0) {
                         document.getElementById('deal-curr-price').value = pricePctOrRub.toFixed(2);
                         document.getElementById('deal-buy-price').value = pricePctOrRub.toFixed(2);
                     }
@@ -692,9 +714,6 @@
             const keys = Object.keys(totalsObj).filter(k => Math.abs(totalsObj[k]) > 0.01);
             if (keys.length === 0) return `<div class="text-lg font-bold text-gray-900">0,00 ₽</div>`;
 
-            const priority = ['₽', 'Br', '$', '€'];
-            keys.sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
-
             return `<div class="flex flex-col space-y-2 mt-1">
                 ${keys.map((k, index) => `
                     <div class="${index === 0 ? 'text-xl font-bold text-gray-900' : 'text-sm font-medium text-gray-500'}">
@@ -708,13 +727,9 @@
         function renderCharts(passiveMonthlyTotals, assetTypesTotals) {
             // 1. График по месяцам (Бары вверх)
             const monthsLabels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
-            const currentMonthIdx = new Date().getMonth();
             
-            // Сдвигаем массив месяцев, чтобы текущий был первым или по порядку года
             const monthlyDataArr = [];
             for(let i = 0; i < 12; i++) {
-                // Распределяем примерный или точный ежемесячный доход
-                // Здесь берем базовый месячный доход равномерно или нарастающим итогом
                 const mKey = Object.keys(passiveMonthlyTotals)[0] || '₽';
                 monthlyDataArr.push(passiveMonthlyTotals[mKey] || 0);
             }
@@ -794,7 +809,7 @@
         function render() {
             const totals = { invested: {}, current: {}, profit: {}, passiveMonth: {}, passiveYear: {} };
             const assetTypesTotals = {};
-            const currencies = ['₽', 'Br', '$', '€'];
+            const currencies = ['₽'];
             
             currencies.forEach(c => {
                 totals.invested[c] = 0; totals.current[c] = 0; 
@@ -803,6 +818,12 @@
 
             investmentsData.forEach(acc => {
                 const c = acc.currency || '₽';
+                // Если вдруг в базе есть активы в других валютах, они просто не будут учтены в общей статистике на карточках
+                if (!totals.invested[c]) {
+                     totals.invested[c] = 0; totals.current[c] = 0;
+                     totals.profit[c] = 0; totals.passiveMonth[c] = 0; totals.passiveYear[c] = 0;
+                }
+
                 const inv = acc.quantity * acc.average_buy_price;
                 const cur = acc.quantity * acc.current_price;
                 
@@ -816,7 +837,6 @@
                     totals.passiveYear[c] += mInc * 12;
                 }
 
-                // Собираем для круговой диаграммы
                 const aType = acc.asset_type || 'Другое';
                 assetTypesTotals[aType] = (assetTypesTotals[aType] || 0) + cur;
             });
@@ -825,10 +845,9 @@
             document.getElementById('widget-current').innerHTML = renderBalancesHTML(totals.current);
             document.getElementById('widget-profit').innerHTML = renderBalancesHTML(totals.profit);
             
-            // Пассивный доход в месяц и год на карточках
             const passiveKeys = Object.keys(totals.passiveMonth).filter(k => totals.passiveMonth[k] > 0);
             if (passiveKeys.length > 0) {
-                const pPri = ['₽', 'Br', '$', '€'];
+                const pPri = ['₽'];
                 passiveKeys.sort((a, b) => pPri.indexOf(a) - pPri.indexOf(b));
                 
                 document.getElementById('widget-passive').innerHTML = `
