@@ -336,7 +336,7 @@
             }
         }
 
-        // --- НОВАЯ ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ РЕАЛЬНОЙ ЦЕНЫ ---
+        // --- ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ РЕАЛЬНОЙ ЦЕНЫ ---
         async function fetchMoexPrice(secid) {
             try {
                 const resp = await fetch(`https://iss.moex.com/iss/engines/stock/securities/${secid}.json`);
@@ -379,7 +379,7 @@
             }
         }
 
-        // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ФОНОВОГО ПЕРЕСЧЕТА ЦЕН ---
+        // --- ФОНОВЫЙ ПЕРЕСЧЕТ ЦЕН ---
         async function updatePricesFromMoex() {
             for (let item of investmentsData) {
                 if (!item.ticker) continue;
@@ -460,7 +460,8 @@
             spinner.classList.remove('hidden');
             searchDebounce = setTimeout(async () => {
                 try {
-                    const resp = await fetch(`https://iss.moex.com/iss/securities.json?q=${encodeURIComponent(val)}&is_trading=1&limit=8`);
+                    // Убран фильтр is_trading=1, чтобы ОФЗ и другие активы не скрывались из выдачи
+                    const resp = await fetch(`https://iss.moex.com/iss/securities.json?q=${encodeURIComponent(val)}&limit=10`);
                     const data = await resp.json();
                     
                     const cols = data.securities.columns;
@@ -507,7 +508,7 @@
             }, 300);
         }
 
-        // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ВЫБОРА БУМАГИ ---
+        // --- ВЫБОР БУМАГИ И АВТОЗАПОЛНЕНИЕ ---
         async function selectMoexSecurity(secid) {
             document.getElementById('moex-results').classList.add('hidden');
             document.getElementById('deal-search-moex').value = secid;
@@ -528,7 +529,7 @@
                 const desc = {};
                 descRows.forEach(r => desc[r[nameIdx]] = r[valIdx]);
 
-                // Получаем РЕАЛЬНУЮ цену новым методом
+                // Получаем цену
                 const pricePctOrRub = await fetchMoexPrice(secid);
 
                 const group = desc.GROUP || '';
@@ -544,7 +545,6 @@
                     toggleBondFields();
 
                     const faceValue = parseFloat(desc.FACEVALUE) || 1000;
-                    // Если цена найдена, считаем % от номинала. Если вдруг нет - ставим номинал.
                     const actualPrice = pricePctOrRub > 0 ? (pricePctOrRub / 100) * faceValue : faceValue;
                     
                     document.getElementById('deal-curr-price').value = actualPrice.toFixed(2);
@@ -562,24 +562,17 @@
                         else payouts = 12;
                         document.getElementById('deal-payouts').value = payouts.toString();
                     }
-                } else if (isFund) {
-                    document.getElementById('deal-type').value = 'Фонд';
-                    toggleBondFields();
-                    if(pricePctOrRub > 0) {
-                        document.getElementById('deal-curr-price').value = pricePctOrRub.toFixed(2);
-                        document.getElementById('deal-buy-price').value = pricePctOrRub.toFixed(2);
-                    }
                 } else {
-                    document.getElementById('deal-type').value = 'Акция';
+                    document.getElementById('deal-type').value = isFund ? 'Фонд' : 'Акция';
                     toggleBondFields();
-                    if(pricePctOrRub > 0) {
-                        document.getElementById('deal-curr-price').value = pricePctOrRub.toFixed(2);
-                        document.getElementById('deal-buy-price').value = pricePctOrRub.toFixed(2);
-                    }
+                    
+                    const finalPrice = pricePctOrRub > 0 ? pricePctOrRub.toFixed(2) : '0.00';
+                    document.getElementById('deal-curr-price').value = finalPrice;
+                    document.getElementById('deal-buy-price').value = finalPrice;
                 }
 
             } catch (err) {
-                console.error("Ошибка загрузки MOEX:", err);
+                console.error("Ошибка загрузки данных бумаги:", err);
             } finally {
                 spinner.classList.add('hidden');
             }
@@ -725,7 +718,6 @@
 
         // Рендер графиков через Chart.js
         function renderCharts(passiveMonthlyTotals, assetTypesTotals) {
-            // 1. График по месяцам (Бары вверх)
             const monthsLabels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
             
             const monthlyDataArr = [];
@@ -760,7 +752,6 @@
                 }
             });
 
-            // 2. График по типам активов (donut)
             const assetTypesKeys = Object.keys(assetTypesTotals);
             const assetTypesValues = assetTypesKeys.map(k => assetTypesTotals[k]);
 
@@ -818,7 +809,6 @@
 
             investmentsData.forEach(acc => {
                 const c = acc.currency || '₽';
-                // Если вдруг в базе есть активы в других валютах, они просто не будут учтены в общей статистике на карточках
                 if (!totals.invested[c]) {
                      totals.invested[c] = 0; totals.current[c] = 0;
                      totals.profit[c] = 0; totals.passiveMonth[c] = 0; totals.passiveYear[c] = 0;
