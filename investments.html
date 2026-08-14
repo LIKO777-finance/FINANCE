@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Подключаем Chart.js для графиков -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
         tailwind.config = {
@@ -83,9 +85,34 @@
             </div>
         </header>
 
-        <div class="p-8">
-            <!-- Виджеты со сводкой -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="p-8 space-y-8">
+            <!-- 1. Самые важные карточки: Пассивный доход (наверху) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gradient-to-br from-indigo-600 to-blue-600 p-6 rounded-2xl shadow-sm text-white flex flex-col justify-between relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <p class="text-sm text-indigo-100 font-medium">Пассивный доход в год</p>
+                        <div class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-xl">
+                            <i class="ph ph-calendar-check"></i>
+                        </div>
+                    </div>
+                    <div id="widget-passive-year" class="balances-container space-y-1 relative z-10 text-white font-bold text-2xl">0,00 ₽</div>
+                    <i class="ph ph-coins absolute -bottom-4 -right-4 text-8xl opacity-10"></i>
+                </div>
+
+                <div class="bg-gradient-to-br from-indigo-700 to-indigo-500 p-6 rounded-2xl shadow-sm text-white flex flex-col justify-between relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <p class="text-sm text-indigo-100 font-medium">Пассивный доход в месяц</p>
+                        <div class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-xl">
+                            <i class="ph ph-coins"></i>
+                        </div>
+                    </div>
+                    <div id="widget-passive" class="balances-container space-y-1 relative z-10 text-white font-bold text-2xl">0,00 ₽</div>
+                    <i class="ph ph-chart-line-up absolute -bottom-4 -right-4 text-8xl opacity-10"></i>
+                </div>
+            </div>
+
+            <!-- 2. Карточки состояния портфеля (снизу от пассивного дохода) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
                     <div class="flex justify-between items-start mb-4">
                         <p class="text-sm text-gray-500">Вложено средств</p>
@@ -93,7 +120,7 @@
                             <i class="ph ph-download-simple"></i>
                         </div>
                     </div>
-                    <div id="widget-invested" class="balances-container space-y-1">0 ₽</div>
+                    <div id="widget-invested" class="balances-container space-y-1">0,00 ₽</div>
                 </div>
                 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
@@ -103,7 +130,7 @@
                             <i class="ph ph-briefcase"></i>
                         </div>
                     </div>
-                    <div id="widget-current" class="balances-container space-y-1">0 ₽</div>
+                    <div id="widget-current" class="balances-container space-y-1">0,00 ₽</div>
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
@@ -113,52 +140,53 @@
                             <i class="ph ph-trend-up"></i>
                         </div>
                     </div>
-                    <div id="widget-profit" class="balances-container space-y-1">0 ₽</div>
+                    <div id="widget-profit" class="balances-container space-y-1">0,00 ₽</div>
                 </div>
+            </div>
 
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-brand text-white flex flex-col justify-between relative overflow-hidden" style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);">
-                    <div class="flex justify-between items-start mb-4 relative z-10">
-                        <p class="text-sm text-indigo-100 font-medium">Пассивный доход в мес.</p>
-                        <div class="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-xl">
-                            <i class="ph ph-coins"></i>
-                        </div>
+            <!-- 3. Аналитика и графики (статистика по месяцам и по активам) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- График по месяцам (бары вверх) -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="ph ph-chart-bar text-brand text-xl"></i>
+                        Статистика пассивного дохода по месяцам
+                    </h3>
+                    <div class="h-64 relative">
+                        <canvas id="monthlyPassiveChart"></canvas>
                     </div>
-                    <div id="widget-passive" class="balances-container space-y-1 relative z-10 text-white font-bold">0 ₽</div>
-                    <i class="ph ph-chart-line-up absolute -bottom-4 -right-4 text-8xl opacity-10"></i>
+                </div>
+
+                <!-- Аналитика по активам (структура портфеля) -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="ph ph-chart-pie-slice text-brand text-xl"></i>
+                        Аналитика по типам активов
+                    </h3>
+                    <div class="h-64 relative flex items-center justify-center">
+                        <canvas id="assetAllocationChart"></canvas>
+                    </div>
                 </div>
             </div>
 
-            <!-- Фильтры -->
-            <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-3">
-                <div class="flex space-x-6" id="tabs-container">
-                    <button onclick="setTab('Все активы')" class="tab-btn font-medium text-brand border-b-2 border-brand pb-3 -mb-3" data-tab="Все активы">Все активы</button>
-                    <button onclick="setTab('Акции')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-3 -mb-3" data-tab="Акции">Акции</button>
-                    <button onclick="setTab('Облигации')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-3 -mb-3" data-tab="Облигации">Облигации</button>
-                    <button onclick="setTab('Фонды')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-3 -mb-3" data-tab="Фонды">Фонды</button>
+            <!-- 4. Фильтры и список активов -->
+            <div>
+                <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-3">
+                    <div class="flex space-x-6" id="tabs-container">
+                        <button onclick="setTab('Все активы')" class="tab-btn font-medium text-brand border-b-2 border-brand pb-3 -mb-3" data-tab="Все активы">Все активы</button>
+                        <button onclick="setTab('Акции')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-3 -mb-3" data-tab="Акции">Акции</button>
+                        <button onclick="setTab('Облигации')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-3 -mb-3" data-tab="Облигации">Облигации</button>
+                        <button onclick="setTab('Фонды')" class="tab-btn font-medium text-gray-500 hover:text-gray-800 transition pb-3 -mb-3" data-tab="Фонды">Фонды</button>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Список активов -->
-            <div id="investments-container" class="pb-10 space-y-4">
-                <div class="p-8 text-center text-gray-500">Загрузка данных...</div>
+                <!-- Список активов -->
+                <div id="investments-container" class="space-y-4">
+                    <div class="p-8 text-center text-gray-500">Загрузка данных...</div>
+                </div>
             </div>
         </div>
     </main>
-
-    <!-- Правая панель (Статистика по месяцам) -->
-    <aside class="w-80 bg-white border-l border-gray-200 overflow-y-auto p-6 hidden lg:block shrink-0">
-        <div class="mb-8">
-            <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <i class="ph ph-calendar-blank text-brand"></i>
-                Доход по месяцам
-            </h3>
-            <p class="text-xs text-gray-500 mb-4">Расчетный план выплат (купоны и дивиденды) на ближайшее время исходя из текущего портфеля.</p>
-            
-            <div class="space-y-3" id="monthly-stats-container">
-                <!-- Сюда рендерится статистика -->
-            </div>
-        </div>
-    </aside>
 
     <!-- Модальное окно "Новая сделка" -->
     <div id="deal-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 transition-opacity p-4">
@@ -273,8 +301,9 @@
 
         let investmentsData = [];
         let currentTab = 'Все активы';
+        let monthlyChartInstance = null;
+        let assetChartInstance = null;
 
-        // Форматирование денег с пробелами (например, 117 568,85 ₽)
         const formatMoney = (amount, currency = '₽', hideCurrency = false) => {
             const formatted = Number(amount).toLocaleString('ru-RU', { 
                 minimumFractionDigits: 2, 
@@ -298,9 +327,12 @@
 
                 if (error) throw error;
                 investmentsData = data || [];
+                
+                // Автоматическое обновление цен с Мосбиржи в фоне для актуальности
+                await updatePricesFromMoex();
                 render(); 
             } catch (error) {
-                console.error("Ошибка:", error);
+                console.error("Ошибка загрузки:", error);
                 document.getElementById('investments-container').innerHTML = `
                     <div class="p-8 text-center text-red-500 bg-white rounded-2xl border border-red-100">
                         Ошибка загрузки. Проверьте консоль.
@@ -308,7 +340,47 @@
             }
         }
 
-        // Модальное окно
+        // Автоматическое обновление текущих цен с Мосбиржи для уже сохраненных тикеров
+        async function updatePricesFromMoex() {
+            for (let item of investmentsData) {
+                if (!item.ticker) continue;
+                try {
+                    const resp = await fetch(`https://iss.moex.com/iss/securities/${item.ticker}.json`);
+                    const data = await resp.json();
+                    if (data.boards && data.boards.data) {
+                        const bCols = data.boards.columns;
+                        const bRows = data.boards.data;
+                        const lastIdx = bCols.indexOf('LAST');
+                        const prevWapIdx = bCols.indexOf('PREVWAPPRICE');
+                        const prevPriceIdx = bCols.indexOf('PREVPRICE');
+
+                        let price = 0;
+                        for (let r of bRows) {
+                            const p = r[lastIdx] || r[prevWapIdx] || r[prevPriceIdx];
+                            if (p) { price = parseFloat(p); break; }
+                        }
+
+                        if (price > 0) {
+                            if (item.asset_type === 'Облигация') {
+                                const descCols = data.description.columns;
+                                const descRows = data.description.data;
+                                const nameIdx = descCols.indexOf('name');
+                                const valIdx = descCols.indexOf('value');
+                                const desc = {};
+                                descRows.forEach(r => desc[r[nameIdx]] = r[valIdx]);
+                                const faceValue = parseFloat(desc.FACEVALUE) || 1000;
+                                item.current_price = (price / 100) * faceValue;
+                            } else {
+                                item.current_price = price;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // Игнорируем ошибки сети по отдельным тикерам, оставляя старую цену
+                }
+            }
+        }
+
         const dealModal = document.getElementById('deal-modal');
         const dealModalContent = document.getElementById('deal-modal-content');
 
@@ -316,8 +388,6 @@
             document.getElementById('deal-form').reset();
             document.getElementById('deal-search-moex').value = '';
             document.getElementById('moex-results').classList.add('hidden');
-            
-            // По умолчанию дата сделки — сегодня
             document.getElementById('deal-date').value = new Date().toISOString().split('T')[0];
             
             toggleBondFields();
@@ -344,7 +414,6 @@
             }
         }
 
-        // Интеграция с MOEX ISS API (Поиск)
         let searchDebounce = null;
         function handleMoexSearch(val) {
             clearTimeout(searchDebounce);
@@ -408,7 +477,6 @@
             }, 300);
         }
 
-        // Загрузка детальных спецификаций с Мосбиржи
         async function selectMoexSecurity(secid) {
             document.getElementById('moex-results').classList.add('hidden');
             document.getElementById('deal-search-moex').value = secid;
@@ -428,7 +496,6 @@
                 const desc = {};
                 descRows.forEach(r => desc[r[nameIdx]] = r[valIdx]);
 
-                // Рыночная цена с досок торгов
                 let pricePctOrRub = 0;
                 if (data.boards && data.boards.data) {
                     const bCols = data.boards.columns;
@@ -439,10 +506,7 @@
 
                     for (let r of bRows) {
                         const p = r[lastIdx] || r[prevWapIdx] || r[prevPriceIdx];
-                        if (p) {
-                            pricePctOrRub = parseFloat(p);
-                            break;
-                        }
+                        if (p) { pricePctOrRub = parseFloat(p); break; }
                     }
                 }
 
@@ -450,7 +514,6 @@
                 const isBond = group.includes('stock_bonds') || group.includes('bond');
                 const isFund = group.includes('ppif') || group.includes('etf');
 
-                // Автоматическое заполнение
                 document.getElementById('deal-ticker').value = desc.SECID || secid;
                 document.getElementById('deal-name').value = desc.NAME || desc.SHORTNAME || secid;
                 document.getElementById('deal-currency').value = '₽';
@@ -460,7 +523,6 @@
                     toggleBondFields();
 
                     const faceValue = parseFloat(desc.FACEVALUE) || 1000;
-                    // Для облигаций цена на бирже задается в % от номинала
                     const actualPrice = pricePctOrRub ? (pricePctOrRub / 100) * faceValue : faceValue;
                     
                     document.getElementById('deal-curr-price').value = actualPrice.toFixed(2);
@@ -501,7 +563,6 @@
             }
         }
 
-        // Закрывать выпадающий список при клике вне его
         document.addEventListener('click', (e) => {
             if (!e.target.closest('#deal-search-moex') && !e.target.closest('#moex-results')) {
                 document.getElementById('moex-results')?.classList.add('hidden');
@@ -643,42 +704,73 @@
             </div>`;
         }
 
-        function renderMonthlyStats(passiveTotals) {
-            const container = document.getElementById('monthly-stats-container');
-            const keys = Object.keys(passiveTotals).filter(k => passiveTotals[k] > 0);
-            
-            if (keys.length === 0) {
-                container.innerHTML = `
-                    <div class="p-4 border border-dashed border-gray-200 rounded-xl text-center text-sm text-gray-400">
-                        Пока нет активов, генерирующих пассивный доход
-                    </div>`;
-                return;
-            }
-
-            const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+        // Рендер графиков через Chart.js
+        function renderCharts(passiveMonthlyTotals, assetTypesTotals) {
+            // 1. График по месяцам (Бары вверх)
+            const monthsLabels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
             const currentMonthIdx = new Date().getMonth();
             
-            let html = '';
-            for(let i = 0; i < 3; i++) {
-                const monthName = months[(currentMonthIdx + i) % 12];
-                const isCurrent = i === 0;
-                
-                let amountsHtml = keys.map(k => `
-                    <span class="font-semibold ${isCurrent ? 'text-brand' : 'text-gray-700'}">
-                        ${formatMoney(passiveTotals[k], k)}
-                    </span>
-                `).join('<span class="text-gray-300 mx-1">+</span>');
-
-                html += `
-                <div class="p-3 rounded-xl border ${isCurrent ? 'border-brand-light bg-brand-light bg-opacity-20' : 'border-gray-100 bg-gray-50'} flex justify-between items-center">
-                    <span class="text-sm font-medium ${isCurrent ? 'text-gray-900' : 'text-gray-600'}">${monthName}</span>
-                    <div class="text-sm text-right flex flex-col">
-                        ${amountsHtml}
-                    </div>
-                </div>`;
+            // Сдвигаем массив месяцев, чтобы текущий был первым или по порядку года
+            const monthlyDataArr = [];
+            for(let i = 0; i < 12; i++) {
+                // Распределяем примерный или точный ежемесячный доход
+                // Здесь берем базовый месячный доход равномерно или нарастающим итогом
+                const mKey = Object.keys(passiveMonthlyTotals)[0] || '₽';
+                monthlyDataArr.push(passiveMonthlyTotals[mKey] || 0);
             }
 
-            container.innerHTML = html;
+            const ctxMonthly = document.getElementById('monthlyPassiveChart').getContext('2d');
+            if (monthlyChartInstance) monthlyChartInstance.destroy();
+            
+            monthlyChartInstance = new Chart(ctxMonthly, {
+                type: 'bar',
+                data: {
+                    labels: monthsLabels,
+                    datasets: [{
+                        label: 'Пассивный доход',
+                        data: monthlyDataArr,
+                        backgroundColor: '#4f46e5',
+                        borderRadius: 6,
+                        barThickness: 'flex'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 2. График по типам активов (donut)
+            const assetTypesKeys = Object.keys(assetTypesTotals);
+            const assetTypesValues = assetTypesKeys.map(k => assetTypesTotals[k]);
+
+            const ctxAsset = document.getElementById('assetAllocationChart').getContext('2d');
+            if (assetChartInstance) assetChartInstance.destroy();
+
+            assetChartInstance = new Chart(ctxAsset, {
+                type: 'doughnut',
+                data: {
+                    labels: assetTypesKeys.length > 0 ? assetTypesKeys : ['Нет активов'],
+                    datasets: [{
+                        data: assetTypesValues.length > 0 ? assetTypesValues : [1],
+                        backgroundColor: ['#4f46e5', '#10b981', '#8b5cf6', '#f59e0b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } } }
+                    },
+                    cutout: '70%'
+                }
+            });
         }
 
         function renderList() {
@@ -694,17 +786,19 @@
                 return;
             }
 
-            container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 ${filtered.map(createAssetHTML).join('')}
             </div>`;
         }
 
         function render() {
-            const totals = { invested: {}, current: {}, profit: {}, passive: {} };
+            const totals = { invested: {}, current: {}, profit: {}, passiveMonth: {}, passiveYear: {} };
+            const assetTypesTotals = {};
             const currencies = ['₽', 'Br', '$', '€'];
+            
             currencies.forEach(c => {
                 totals.invested[c] = 0; totals.current[c] = 0; 
-                totals.profit[c] = 0; totals.passive[c] = 0;
+                totals.profit[c] = 0; totals.passiveMonth[c] = 0; totals.passiveYear[c] = 0;
             });
 
             investmentsData.forEach(acc => {
@@ -717,27 +811,40 @@
                 totals.profit[c] += (cur - inv);
                 
                 if (acc.monthly_passive_income) {
-                    totals.passive[c] += Number(acc.monthly_passive_income);
+                    const mInc = Number(acc.monthly_passive_income);
+                    totals.passiveMonth[c] += mInc;
+                    totals.passiveYear[c] += mInc * 12;
                 }
+
+                // Собираем для круговой диаграммы
+                const aType = acc.asset_type || 'Другое';
+                assetTypesTotals[aType] = (assetTypesTotals[aType] || 0) + cur;
             });
 
             document.getElementById('widget-invested').innerHTML = renderBalancesHTML(totals.invested);
             document.getElementById('widget-current').innerHTML = renderBalancesHTML(totals.current);
             document.getElementById('widget-profit').innerHTML = renderBalancesHTML(totals.profit);
             
-            const passiveKeys = Object.keys(totals.passive).filter(k => totals.passive[k] > 0);
+            // Пассивный доход в месяц и год на карточках
+            const passiveKeys = Object.keys(totals.passiveMonth).filter(k => totals.passiveMonth[k] > 0);
             if (passiveKeys.length > 0) {
                 const pPri = ['₽', 'Br', '$', '€'];
                 passiveKeys.sort((a, b) => pPri.indexOf(a) - pPri.indexOf(b));
+                
                 document.getElementById('widget-passive').innerHTML = `
-                    <div class="flex flex-col space-y-1 mt-1">
-                        ${passiveKeys.map(k => `<div class="text-xl">${formatMoney(totals.passive[k], k)}</div>`).join('')}
+                    <div class="flex flex-col space-y-1">
+                        ${passiveKeys.map(k => `<div class="text-2xl">${formatMoney(totals.passiveMonth[k], k)}</div>`).join('')}
+                    </div>`;
+                document.getElementById('widget-passive-year').innerHTML = `
+                    <div class="flex flex-col space-y-1">
+                        ${passiveKeys.map(k => `<div class="text-2xl">${formatMoney(totals.passiveYear[k], k)}</div>`).join('')}
                     </div>`;
             } else {
-                document.getElementById('widget-passive').innerHTML = '<div class="text-xl mt-1">0,00 ₽</div>';
+                document.getElementById('widget-passive').innerHTML = '<div class="text-2xl">0,00 ₽</div>';
+                document.getElementById('widget-passive-year').innerHTML = '<div class="text-2xl">0,00 ₽</div>';
             }
 
-            renderMonthlyStats(totals.passive);
+            renderCharts(totals.passiveMonth, assetTypesTotals);
             renderList();
         }
 
