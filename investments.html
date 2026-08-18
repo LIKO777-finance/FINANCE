@@ -8,7 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Подключаем Chart.js для графиков -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
@@ -86,7 +85,7 @@
         </header>
 
         <div class="p-8 space-y-8">
-            <!-- 1. Самые важные карточки: Пассивный доход (наверху) -->
+            <!-- 1. Пассивный доход -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-gradient-to-br from-indigo-600 to-blue-600 p-6 rounded-2xl shadow-sm text-white flex flex-col justify-between relative overflow-hidden">
                     <div class="flex justify-between items-start mb-4 relative z-10">
@@ -111,7 +110,7 @@
                 </div>
             </div>
 
-            <!-- 2. Карточки состояния портфеля (снизу от пассивного дохода) -->
+            <!-- 2. Карточки состояния портфеля -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
                     <div class="flex justify-between items-start mb-4">
@@ -144,9 +143,8 @@
                 </div>
             </div>
 
-            <!-- 3. Аналитика и графики (статистика по месяцам и по активам) -->
+            <!-- 3. Аналитика -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- График по месяцам (бары вверх) -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <i class="ph ph-chart-bar text-brand text-xl"></i>
@@ -157,7 +155,6 @@
                     </div>
                 </div>
 
-                <!-- Аналитика по активам (структура портфеля) -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h3 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <i class="ph ph-chart-pie-slice text-brand text-xl"></i>
@@ -180,7 +177,6 @@
                     </div>
                 </div>
 
-                <!-- Список активов -->
                 <div id="investments-container" class="space-y-4">
                     <div class="p-8 text-center text-gray-500">Загрузка данных...</div>
                 </div>
@@ -198,7 +194,6 @@
                 </button>
             </div>
 
-            <!-- Поиск MOEX -->
             <div class="mb-5 relative">
                 <label class="block text-sm font-semibold text-indigo-900 mb-1">Автозаполнение по бирже MOEX</label>
                 <div class="relative">
@@ -208,7 +203,6 @@
                         <i class="ph ph-spinner animate-spin text-indigo-600 text-lg"></i>
                     </div>
                 </div>
-                <!-- Выпадающие результаты поиска MOEX -->
                 <div id="moex-results" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto divide-y divide-gray-100"></div>
             </div>
             
@@ -336,63 +330,72 @@
             }
         }
 
-        // --- УЛУЧШЕННАЯ ФУНКЦИЯ ПОЛУЧЕНИЯ ЦЕНЫ (решает проблему с выходными и нулями) ---
-        async function fetchMoexPrice(secid) {
+        // --- УЛЬТРАНАДЕЖНАЯ ФУНКЦИЯ ПОЛУЧЕНИЯ ЦЕНЫ ---
+        // Теперь мы передаем конкретный рынок ('shares' или 'bonds')
+        async function fetchMoexPrice(secid, market = 'shares') {
             try {
-                const resp = await fetch(`https://iss.moex.com/iss/engines/stock/securities/${secid}.json`);
+                // Обращаемся строго к нужному рынку, чтобы биржа не скрыла данные
+                const resp = await fetch(`https://iss.moex.com/iss/engines/stock/markets/${market}/securities/${secid}.json?iss.meta=off`);
                 if (!resp.ok) return 0;
                 const data = await resp.json();
-                let price = 0;
+                
+                let bestPrice = 0;
+                let foundPrimary = false;
 
-                // 1. Ищем последнюю цену сделки (если торги идут)
-                if (data.marketdata && data.marketdata.data) {
-                    const cols = data.marketdata.columns;
-                    const rows = data.marketdata.data;
-                    const lastIdx = cols.indexOf('LAST');
+                // Функция для перебора колонок с ценами
+                const extractPrice = (blockName, priceCols) => {
+                    if (!data[blockName] || !data[blockName].data) return;
+                    const cols = data[blockName].columns;
+                    const rows = data[blockName].data;
                     const boardIdx = cols.indexOf('BOARDID');
                     
+                    const pIdxs = priceCols.map(c => cols.indexOf(c)).filter(i => i !== -1);
+                    
                     for (let r of rows) {
-                        if (lastIdx !== -1 && r[lastIdx] !== null && parseFloat(r[lastIdx]) > 0) {
-                            price = parseFloat(r[lastIdx]);
-                            if (['TQBR', 'TQOB', 'TQCB', 'TQTF'].includes(r[boardIdx])) break;
+                        const board = boardIdx !== -1 ? r[boardIdx] : '';
+                        let p = 0;
+                        
+                        // Ищем первую доступную колонку с позитивной ценой
+                        for (let idx of pIdxs) {
+                            if (r[idx] !== null && parseFloat(r[idx]) > 0) {
+                                p = parseFloat(r[idx]);
+                                break;
+                            }
+                        }
+                        
+                        if (p > 0) {
+                            if (!foundPrimary) bestPrice = p; // Сохраняем как резерв
+                            // Если это основная доска Т+ (TQ...), фиксируем и прекращаем поиск
+                            if (['TQBR', 'TQOB', 'TQCB', 'TQTF'].includes(board)) {
+                                bestPrice = p;
+                                foundPrimary = true;
+                                break;
+                            }
                         }
                     }
-                }
+                };
 
-                // 2. Если торги закрыты, ищем цену закрытия или предыдущую (надежный fallback)
-                if (price === 0 && data.securities && data.securities.data) {
-                    const cols = data.securities.columns;
-                    const rows = data.securities.data;
-                    const prevIdx = cols.indexOf('PREVPRICE');
-                    const closeIdx = cols.indexOf('LEGALCLOSEPRICE');
-                    const waIdx = cols.indexOf('WAPRICE');
-                    const boardIdx = cols.indexOf('BOARDID');
+                // 1. Ищем в "живых" торгах
+                extractPrice('marketdata', ['LAST', 'LCURRENTPRICE', 'MARKETPRICE']);
+                if (foundPrimary && bestPrice > 0) return bestPrice;
 
-                    for (let r of rows) {
-                        let p = null;
-                        if (prevIdx !== -1 && r[prevIdx] !== null) p = r[prevIdx];
-                        else if (closeIdx !== -1 && r[closeIdx] !== null) p = r[closeIdx];
-                        else if (waIdx !== -1 && r[waIdx] !== null) p = r[waIdx];
-
-                        if (p !== null && parseFloat(p) > 0) {
-                            price = parseFloat(p);
-                            if (['TQBR', 'TQOB', 'TQCB', 'TQTF'].includes(r[boardIdx])) break;
-                        }
-                    }
-                }
-                return price;
+                // 2. Ищем в исторических/закрытых торгах
+                extractPrice('securities', ['PREVPRICE', 'LEGALCLOSEPRICE', 'PREVLEGALCLOSEPRICE', 'CLOSEPRICE', 'WAPRICE']);
+                
+                return bestPrice;
             } catch (e) {
-                console.error('Ошибка получения цены MOEX:', e);
+                console.error('Ошибка получения цены:', e);
                 return 0;
             }
         }
 
-        // --- ФОНОВЫЙ ПЕРЕСЧЕТ ЦЕН ---
         async function updatePricesFromMoex() {
             for (let item of investmentsData) {
                 if (!item.ticker) continue;
                 try {
-                    const pricePctOrRub = await fetchMoexPrice(item.ticker);
+                    // Передаем правильный рынок в функцию
+                    const market = item.asset_type === 'Облигация' ? 'bonds' : 'shares';
+                    const pricePctOrRub = await fetchMoexPrice(item.ticker, market);
                     
                     if (pricePctOrRub > 0) {
                         if (item.asset_type === 'Облигация') {
@@ -515,7 +518,6 @@
             }, 300);
         }
 
-        // --- ВЫБОР БУМАГИ И АВТОЗАПОЛНЕНИЕ ---
         async function selectMoexSecurity(secid) {
             document.getElementById('moex-results').classList.add('hidden');
             document.getElementById('deal-search-moex').value = secid;
@@ -524,7 +526,7 @@
             spinner.classList.remove('hidden');
 
             try {
-                // Получаем описание бумаги
+                // 1. Получаем описание бумаги (номинал, купон и т.д.)
                 const descResp = await fetch(`https://iss.moex.com/iss/securities/${secid}.json`);
                 const descData = await descResp.json();
 
@@ -536,12 +538,14 @@
                 const desc = {};
                 descRows.forEach(r => desc[r[nameIdx]] = r[valIdx]);
 
-                // Получаем цену
-                const pricePctOrRub = await fetchMoexPrice(secid);
-
+                // Выясняем рынок (акции или облигации), чтобы запрос цены не возвращал пустоту
                 const group = desc.GROUP || '';
                 const isBond = group.includes('stock_bonds') || group.includes('bond');
                 const isFund = group.includes('ppif') || group.includes('etf');
+                const market = isBond ? 'bonds' : 'shares';
+
+                // 2. Получаем цену с конкретного рынка
+                const pricePctOrRub = await fetchMoexPrice(secid, market);
 
                 document.getElementById('deal-ticker').value = desc.SECID || secid;
                 document.getElementById('deal-name').value = desc.NAME || desc.SHORTNAME || secid;
@@ -552,6 +556,7 @@
                     toggleBondFields();
 
                     const faceValue = parseFloat(desc.FACEVALUE) || 1000;
+                    // Если цена > 0, считаем % от номинала. Если цена = 0 (ошибка API), оставляем номинал.
                     const actualPrice = pricePctOrRub > 0 ? (pricePctOrRub / 100) * faceValue : faceValue;
                     
                     document.getElementById('deal-curr-price').value = actualPrice.toFixed(2);
@@ -611,7 +616,7 @@
                 couponSize = parseFloat(document.getElementById('deal-coupon').value) || 0;
                 payouts = parseInt(document.getElementById('deal-payouts').value) || 0;
                 maturity = document.getElementById('deal-maturity').value || null;
-                monthlyIncome = (couponSize * payouts * qty) / 12; // Сохраняем среднее для БД
+                monthlyIncome = (couponSize * payouts * qty) / 12; 
             }
 
             const payload = {
@@ -723,7 +728,6 @@
             </div>`;
         }
 
-        // Рендер графиков через Chart.js
         function renderCharts(chartDataTotals, assetTypesTotals) {
             const monthsLabels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
             
@@ -802,7 +806,6 @@
         }
 
         function render() {
-            // chartData - хранит данные для конкретных месяцев для графика
             const totals = { invested: {}, current: {}, profit: {}, passiveMonth: {}, passiveYear: {}, chartData: {} };
             const assetTypesTotals = {};
             const currencies = ['₽'];
@@ -828,19 +831,17 @@
                 totals.current[c] += cur;
                 totals.profit[c] += (cur - inv);
                 
-                // Средние показатели для верхних карточек
                 if (acc.monthly_passive_income) {
                     const mInc = Number(acc.monthly_passive_income);
                     totals.passiveMonth[c] += mInc;
                     totals.passiveYear[c] += mInc * 12;
                 }
 
-                // Распределение купонов по месяцам для графика
                 if (acc.asset_type === 'Облигация' && acc.coupon_size && acc.payouts_per_year) {
                     const totalCoupon = acc.coupon_size * acc.quantity;
                     if (acc.maturity_date) {
                         const dateObj = new Date(acc.maturity_date);
-                        const m = dateObj.getMonth(); // 0-11
+                        const m = dateObj.getMonth();
                         if (!isNaN(m)) {
                             const payouts = acc.payouts_per_year;
                             const step = 12 / payouts;
@@ -849,7 +850,6 @@
                                 totals.chartData[c][targetMonth] += totalCoupon;
                             }
                         } else {
-                            // Если дата некорректна, размазываем равномерно
                             const avg = (totalCoupon * acc.payouts_per_year) / 12;
                             for(let i=0; i<12; i++) totals.chartData[c][i] += avg;
                         }
@@ -858,7 +858,6 @@
                         for(let i=0; i<12; i++) totals.chartData[c][i] += avg;
                     }
                 } else if (acc.monthly_passive_income) {
-                    // Для акций/фондов размазываем равномерно
                     const mInc = Number(acc.monthly_passive_income);
                     for(let i=0; i<12; i++) totals.chartData[c][i] += mInc;
                 }
