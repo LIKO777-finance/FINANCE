@@ -239,12 +239,19 @@
                         <input type="text" id="deal-name" required placeholder="Сбербанк ао" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-sm">
                     </div>
                 </div>
-                
-                <div class="grid grid-cols-3 gap-4">
+
+                <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Количество</label>
                         <input type="number" id="deal-qty" required placeholder="10" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-sm">
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Комиссия (всего)</label>
+                        <input type="number" id="deal-commission" placeholder="0.00" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-sm">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Цена покупки</label>
                         <input type="number" id="deal-buy-price" required placeholder="0.00" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-sm">
@@ -330,11 +337,8 @@
             }
         }
 
-        // --- УЛЬТРАНАДЕЖНАЯ ФУНКЦИЯ ПОЛУЧЕНИЯ ЦЕНЫ ---
-        // Теперь мы передаем конкретный рынок ('shares' или 'bonds')
         async function fetchMoexPrice(secid, market = 'shares') {
             try {
-                // Обращаемся строго к нужному рынку, чтобы биржа не скрыла данные
                 const resp = await fetch(`https://iss.moex.com/iss/engines/stock/markets/${market}/securities/${secid}.json?iss.meta=off`);
                 if (!resp.ok) return 0;
                 const data = await resp.json();
@@ -342,7 +346,6 @@
                 let bestPrice = 0;
                 let foundPrimary = false;
 
-                // Функция для перебора колонок с ценами
                 const extractPrice = (blockName, priceCols) => {
                     if (!data[blockName] || !data[blockName].data) return;
                     const cols = data[blockName].columns;
@@ -355,7 +358,6 @@
                         const board = boardIdx !== -1 ? r[boardIdx] : '';
                         let p = 0;
                         
-                        // Ищем первую доступную колонку с позитивной ценой
                         for (let idx of pIdxs) {
                             if (r[idx] !== null && parseFloat(r[idx]) > 0) {
                                 p = parseFloat(r[idx]);
@@ -364,8 +366,7 @@
                         }
                         
                         if (p > 0) {
-                            if (!foundPrimary) bestPrice = p; // Сохраняем как резерв
-                            // Если это основная доска Т+ (TQ...), фиксируем и прекращаем поиск
+                            if (!foundPrimary) bestPrice = p;
                             if (['TQBR', 'TQOB', 'TQCB', 'TQTF'].includes(board)) {
                                 bestPrice = p;
                                 foundPrimary = true;
@@ -375,11 +376,9 @@
                     }
                 };
 
-                // 1. Ищем в "живых" торгах
                 extractPrice('marketdata', ['LAST', 'LCURRENTPRICE', 'MARKETPRICE']);
                 if (foundPrimary && bestPrice > 0) return bestPrice;
 
-                // 2. Ищем в исторических/закрытых торгах
                 extractPrice('securities', ['PREVPRICE', 'LEGALCLOSEPRICE', 'PREVLEGALCLOSEPRICE', 'CLOSEPRICE', 'WAPRICE']);
                 
                 return bestPrice;
@@ -393,7 +392,6 @@
             for (let item of investmentsData) {
                 if (!item.ticker) continue;
                 try {
-                    // Передаем правильный рынок в функцию
                     const market = item.asset_type === 'Облигация' ? 'bonds' : 'shares';
                     const pricePctOrRub = await fetchMoexPrice(item.ticker, market);
                     
@@ -526,7 +524,6 @@
             spinner.classList.remove('hidden');
 
             try {
-                // 1. Получаем описание бумаги (номинал, купон и т.д.)
                 const descResp = await fetch(`https://iss.moex.com/iss/securities/${secid}.json`);
                 const descData = await descResp.json();
 
@@ -538,13 +535,11 @@
                 const desc = {};
                 descRows.forEach(r => desc[r[nameIdx]] = r[valIdx]);
 
-                // Выясняем рынок (акции или облигации), чтобы запрос цены не возвращал пустоту
                 const group = desc.GROUP || '';
                 const isBond = group.includes('stock_bonds') || group.includes('bond');
                 const isFund = group.includes('ppif') || group.includes('etf');
                 const market = isBond ? 'bonds' : 'shares';
 
-                // 2. Получаем цену с конкретного рынка
                 const pricePctOrRub = await fetchMoexPrice(secid, market);
 
                 document.getElementById('deal-ticker').value = desc.SECID || secid;
@@ -556,7 +551,6 @@
                     toggleBondFields();
 
                     const faceValue = parseFloat(desc.FACEVALUE) || 1000;
-                    // Если цена > 0, считаем % от номинала. Если цена = 0 (ошибка API), оставляем номинал.
                     const actualPrice = pricePctOrRub > 0 ? (pricePctOrRub / 100) * faceValue : faceValue;
                     
                     document.getElementById('deal-curr-price').value = actualPrice.toFixed(2);
@@ -606,6 +600,7 @@
             const qty = parseFloat(document.getElementById('deal-qty').value) || 0;
             const buyPrice = parseFloat(document.getElementById('deal-buy-price').value) || 0;
             const currPrice = parseFloat(document.getElementById('deal-curr-price').value) || 0;
+            const commission = parseFloat(document.getElementById('deal-commission').value) || 0;
             
             let monthlyIncome = 0;
             let couponSize = null;
@@ -628,6 +623,7 @@
                 quantity: qty,
                 average_buy_price: buyPrice,
                 current_price: currPrice,
+                commission: commission,
                 maturity_date: maturity,
                 coupon_size: couponSize,
                 payouts_per_year: payouts,
@@ -665,7 +661,8 @@
         }
 
         function createAssetHTML(asset) {
-            const invested = asset.quantity * asset.average_buy_price;
+            const comm = Number(asset.commission) || 0;
+            const invested = (asset.quantity * asset.average_buy_price) + comm;
             const currentVal = asset.quantity * asset.current_price;
             const profit = currentVal - invested;
             const profitPct = invested > 0 ? (profit / invested) * 100 : 0;
@@ -700,7 +697,7 @@
                                 ${asset.name}
                                 ${asset.ticker ? `<span class="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider">${asset.ticker}</span>` : ''}
                             </h3>
-                            <p class="text-xs text-gray-500">${asset.quantity} шт. × ${formatMoney(asset.current_price, asset.currency)}</p>
+                            <p class="text-xs text-gray-500">${asset.quantity} шт. × ${formatMoney(asset.current_price, asset.currency)} ${comm > 0 ? `<span class="text-gray-400">(ком. ${formatMoney(comm, asset.currency)})</span>` : ''}</p>
                         </div>
                     </div>
                     <div class="text-right shrink-0">
@@ -824,7 +821,8 @@
                      totals.chartData[c] = Array(12).fill(0);
                 }
 
-                const inv = acc.quantity * acc.average_buy_price;
+                const comm = Number(acc.commission) || 0;
+                const inv = (acc.quantity * acc.average_buy_price) + comm;
                 const cur = acc.quantity * acc.current_price;
                 
                 totals.invested[c] += inv;
