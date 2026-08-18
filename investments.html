@@ -336,10 +336,11 @@
             }
         }
 
-        // --- ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ РЕАЛЬНОЙ ЦЕНЫ ---
+        // --- УЛУЧШЕННАЯ ФУНКЦИЯ ПОЛУЧЕНИЯ ЦЕНЫ (решает проблему с выходными и нулями) ---
         async function fetchMoexPrice(secid) {
             try {
                 const resp = await fetch(`https://iss.moex.com/iss/engines/stock/securities/${secid}.json`);
+                if (!resp.ok) return 0;
                 const data = await resp.json();
                 let price = 0;
 
@@ -348,33 +349,40 @@
                     const cols = data.marketdata.columns;
                     const rows = data.marketdata.data;
                     const lastIdx = cols.indexOf('LAST');
+                    const boardIdx = cols.indexOf('BOARDID');
                     
                     for (let r of rows) {
-                        if (r[lastIdx] !== null && r[lastIdx] > 0) {
+                        if (lastIdx !== -1 && r[lastIdx] !== null && parseFloat(r[lastIdx]) > 0) {
                             price = parseFloat(r[lastIdx]);
-                            break;
+                            if (['TQBR', 'TQOB', 'TQCB', 'TQTF'].includes(r[boardIdx])) break;
                         }
                     }
                 }
 
-                // 2. Если торги закрыты (цена 0), ищем цену предыдущего закрытия
+                // 2. Если торги закрыты, ищем цену закрытия или предыдущую (надежный fallback)
                 if (price === 0 && data.securities && data.securities.data) {
                     const cols = data.securities.columns;
                     const rows = data.securities.data;
                     const prevIdx = cols.indexOf('PREVPRICE');
                     const closeIdx = cols.indexOf('LEGALCLOSEPRICE');
+                    const waIdx = cols.indexOf('WAPRICE');
+                    const boardIdx = cols.indexOf('BOARDID');
 
                     for (let r of rows) {
-                        const p = r[prevIdx] || r[closeIdx];
-                        if (p !== null && p > 0) {
+                        let p = null;
+                        if (prevIdx !== -1 && r[prevIdx] !== null) p = r[prevIdx];
+                        else if (closeIdx !== -1 && r[closeIdx] !== null) p = r[closeIdx];
+                        else if (waIdx !== -1 && r[waIdx] !== null) p = r[waIdx];
+
+                        if (p !== null && parseFloat(p) > 0) {
                             price = parseFloat(p);
-                            break;
+                            if (['TQBR', 'TQOB', 'TQCB', 'TQTF'].includes(r[boardIdx])) break;
                         }
                     }
                 }
                 return price;
             } catch (e) {
-                console.error('Ошибка получения цены:', e);
+                console.error('Ошибка получения цены MOEX:', e);
                 return 0;
             }
         }
@@ -460,7 +468,6 @@
             spinner.classList.remove('hidden');
             searchDebounce = setTimeout(async () => {
                 try {
-                    // Убран фильтр is_trading=1, чтобы ОФЗ и другие активы не скрывались из выдачи
                     const resp = await fetch(`https://iss.moex.com/iss/securities.json?q=${encodeURIComponent(val)}&limit=10`);
                     const data = await resp.json();
                     
@@ -604,7 +611,7 @@
                 couponSize = parseFloat(document.getElementById('deal-coupon').value) || 0;
                 payouts = parseInt(document.getElementById('deal-payouts').value) || 0;
                 maturity = document.getElementById('deal-maturity').value || null;
-                monthlyIncome = (couponSize * payouts * qty) / 12;
+                monthlyIncome = (couponSize * payouts * qty) / 12; // Сохраняем среднее для БД
             }
 
             const payload = {
@@ -717,14 +724,11 @@
         }
 
         // Рендер графиков через Chart.js
-        function renderCharts(passiveMonthlyTotals, assetTypesTotals) {
+        function renderCharts(chartDataTotals, assetTypesTotals) {
             const monthsLabels = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'];
             
-            const monthlyDataArr = [];
-            for(let i = 0; i < 12; i++) {
-                const mKey = Object.keys(passiveMonthlyTotals)[0] || '₽';
-                monthlyDataArr.push(passiveMonthlyTotals[mKey] || 0);
-            }
+            const mKey = Object.keys(chartDataTotals)[0] || '₽';
+            const monthlyDataArr = chartDataTotals[mKey] || Array(12).fill(0);
 
             const ctxMonthly = document.getElementById('monthlyPassiveChart').getContext('2d');
             if (monthlyChartInstance) monthlyChartInstance.destroy();
@@ -734,7 +738,7 @@
                 data: {
                     labels: monthsLabels,
                     datasets: [{
-                        label: 'Пассивный доход',
+                        label: 'Купоны / Дивиденды',
                         data: monthlyDataArr,
                         backgroundColor: '#4f46e5',
                         borderRadius: 6,
@@ -798,13 +802,15 @@
         }
 
         function render() {
-            const totals = { invested: {}, current: {}, profit: {}, passiveMonth: {}, passiveYear: {} };
+            // chartData - хранит данные для конкретных месяцев для графика
+            const totals = { invested: {}, current: {}, profit: {}, passiveMonth: {}, passiveYear: {}, chartData: {} };
             const assetTypesTotals = {};
             const currencies = ['₽'];
             
             currencies.forEach(c => {
                 totals.invested[c] = 0; totals.current[c] = 0; 
                 totals.profit[c] = 0; totals.passiveMonth[c] = 0; totals.passiveYear[c] = 0;
+                totals.chartData[c] = Array(12).fill(0);
             });
 
             investmentsData.forEach(acc => {
@@ -812,6 +818,7 @@
                 if (!totals.invested[c]) {
                      totals.invested[c] = 0; totals.current[c] = 0;
                      totals.profit[c] = 0; totals.passiveMonth[c] = 0; totals.passiveYear[c] = 0;
+                     totals.chartData[c] = Array(12).fill(0);
                 }
 
                 const inv = acc.quantity * acc.average_buy_price;
@@ -821,10 +828,39 @@
                 totals.current[c] += cur;
                 totals.profit[c] += (cur - inv);
                 
+                // Средние показатели для верхних карточек
                 if (acc.monthly_passive_income) {
                     const mInc = Number(acc.monthly_passive_income);
                     totals.passiveMonth[c] += mInc;
                     totals.passiveYear[c] += mInc * 12;
+                }
+
+                // Распределение купонов по месяцам для графика
+                if (acc.asset_type === 'Облигация' && acc.coupon_size && acc.payouts_per_year) {
+                    const totalCoupon = acc.coupon_size * acc.quantity;
+                    if (acc.maturity_date) {
+                        const dateObj = new Date(acc.maturity_date);
+                        const m = dateObj.getMonth(); // 0-11
+                        if (!isNaN(m)) {
+                            const payouts = acc.payouts_per_year;
+                            const step = 12 / payouts;
+                            for (let i = 0; i < payouts; i++) {
+                                const targetMonth = (m + Math.floor(i * step)) % 12;
+                                totals.chartData[c][targetMonth] += totalCoupon;
+                            }
+                        } else {
+                            // Если дата некорректна, размазываем равномерно
+                            const avg = (totalCoupon * acc.payouts_per_year) / 12;
+                            for(let i=0; i<12; i++) totals.chartData[c][i] += avg;
+                        }
+                    } else {
+                        const avg = (totalCoupon * acc.payouts_per_year) / 12;
+                        for(let i=0; i<12; i++) totals.chartData[c][i] += avg;
+                    }
+                } else if (acc.monthly_passive_income) {
+                    // Для акций/фондов размазываем равномерно
+                    const mInc = Number(acc.monthly_passive_income);
+                    for(let i=0; i<12; i++) totals.chartData[c][i] += mInc;
                 }
 
                 const aType = acc.asset_type || 'Другое';
@@ -853,7 +889,7 @@
                 document.getElementById('widget-passive-year').innerHTML = '<div class="text-2xl">0,00 ₽</div>';
             }
 
-            renderCharts(totals.passiveMonth, assetTypesTotals);
+            renderCharts(totals.chartData, assetTypesTotals);
             renderList();
         }
 
