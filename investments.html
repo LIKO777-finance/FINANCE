@@ -253,7 +253,7 @@
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Цена покупки</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Цена покупки (за 1 шт)</label>
                         <input type="number" id="deal-buy-price" required placeholder="0.00" step="0.0001" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition text-sm">
                     </div>
                     <div>
@@ -262,11 +262,17 @@
                     </div>
                 </div>
 
-                <!-- Блок для облигаций -->
+                <!-- Блок для облигаций (добавлен НКД и Амортизация) -->
                 <div id="bond-fields" class="hidden bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Дата погашения</label>
-                        <input type="date" id="deal-maturity" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white text-sm">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Дата погашения</label>
+                            <input type="date" id="deal-maturity" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">НКД уплаченный (всего)</label>
+                            <input type="number" id="deal-nkd" placeholder="0.00" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white text-sm">
+                        </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -282,6 +288,10 @@
                                 <option value="12">12 раз (Месяц)</option>
                             </select>
                         </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Получена амортизация (возврат номинала, всего)</label>
+                        <input type="number" id="deal-amortization" placeholder="0.00" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand focus:border-brand outline-none transition bg-white text-sm">
                     </div>
                 </div>
                 
@@ -606,11 +616,15 @@
             let couponSize = null;
             let payouts = null;
             let maturity = null;
+            let nkd = 0;
+            let amort = 0;
 
             if (type === 'Облигация') {
                 couponSize = parseFloat(document.getElementById('deal-coupon').value) || 0;
                 payouts = parseInt(document.getElementById('deal-payouts').value) || 0;
                 maturity = document.getElementById('deal-maturity').value || null;
+                nkd = parseFloat(document.getElementById('deal-nkd').value) || 0;
+                amort = parseFloat(document.getElementById('deal-amortization').value) || 0;
                 monthlyIncome = (couponSize * payouts * qty) / 12; 
             }
 
@@ -624,6 +638,8 @@
                 average_buy_price: buyPrice,
                 current_price: currPrice,
                 commission: commission,
+                nkd: nkd, 
+                amortization: amort, // Добавили поле амортизации
                 maturity_date: maturity,
                 coupon_size: couponSize,
                 payouts_per_year: payouts,
@@ -635,7 +651,7 @@
             btn.innerText = 'Сохранить в портфель'; btn.disabled = false;
             
             if (error) {
-                alert('Ошибка сохранения: ' + error.message);
+                alert('Ошибка сохранения: ' + error.message + '\nУбедитесь, что вы добавили колонку amortization в таблицу investments!');
             } else { 
                 closeDealModal(); 
                 fetchInvestments(); 
@@ -662,9 +678,15 @@
 
         function createAssetHTML(asset) {
             const comm = Number(asset.commission) || 0;
-            const invested = (asset.quantity * asset.average_buy_price) + comm;
+            const nkd = Number(asset.nkd) || 0;
+            const amort = Number(asset.amortization) || 0;
+            
+            // Вложено: стоимость покупки + комиссии + НКД
+            const invested = (asset.quantity * asset.average_buy_price) + comm + nkd;
             const currentVal = asset.quantity * asset.current_price;
-            const profit = currentVal - invested;
+            
+            // Прибыль: Текущая стоимость + полученная амортизация - Вложено
+            const profit = currentVal + amort - invested;
             const profitPct = invested > 0 ? (profit / invested) * 100 : 0;
             
             const isProfit = profit >= 0;
@@ -679,8 +701,14 @@
             if (asset.asset_type === 'Облигация' && asset.maturity_date) {
                 extraInfo = `
                     <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
-                        <span>Погашение: <span class="font-medium text-gray-700">${formatDate(asset.maturity_date)}</span></span>
-                        <span>Купон: <span class="font-medium text-gray-700">${formatMoney(asset.coupon_size, asset.currency)} (${asset.payouts_per_year} р/г)</span></span>
+                        <div class="flex flex-col gap-1">
+                            <span>Погашение: <span class="font-medium text-gray-700">${formatDate(asset.maturity_date)}</span></span>
+                            ${nkd > 0 ? `<span>Уплачен НКД: <span class="font-medium text-gray-700">${formatMoney(nkd, asset.currency)}</span></span>` : ''}
+                        </div>
+                        <div class="text-right flex flex-col gap-1">
+                            <span>Купон: <span class="font-medium text-gray-700">${formatMoney(asset.coupon_size, asset.currency)} (${asset.payouts_per_year} р/г)</span></span>
+                            ${amort > 0 ? `<span>Амортизация: <span class="font-medium text-emerald-600">+${formatMoney(amort, asset.currency)}</span></span>` : ''}
+                        </div>
                     </div>
                 `;
             }
@@ -822,12 +850,17 @@
                 }
 
                 const comm = Number(acc.commission) || 0;
-                const inv = (acc.quantity * acc.average_buy_price) + comm;
+                const nkd = Number(acc.nkd) || 0;
+                const amort = Number(acc.amortization) || 0;
+                
+                const inv = (acc.quantity * acc.average_buy_price) + comm + nkd;
                 const cur = acc.quantity * acc.current_price;
                 
                 totals.invested[c] += inv;
                 totals.current[c] += cur;
-                totals.profit[c] += (cur - inv);
+                
+                // Прибавляем амортизацию в общую прибыль портфеля, чтобы не было "ложного убытка"
+                totals.profit[c] += (cur + amort - inv);
                 
                 if (acc.monthly_passive_income) {
                     const mInc = Number(acc.monthly_passive_income);
